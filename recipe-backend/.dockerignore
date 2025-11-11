@@ -1,0 +1,26 @@
+# Build artifacts
+target/
+build/
+out/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Version control
+.git
+.gitignore
+
+# Maven wrapper binary
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs and temp files
+*.log
+.DS_Store
+Thumbs.db
+
+# Environment & secrets
+.env

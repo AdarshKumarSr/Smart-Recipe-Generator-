@@ -1,0 +1,45 @@
+HELP.md
+
+# Build artifacts
+target/
+build/
+out/
+
+# Maven wrapper binary
+.mvn/wrapper/maven-wrapper.jar
+
+# Cache folders (don’t include IDE or build system files)
+.apt_generated
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# Visual Studio Code
+.vscode/
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# Environment variables (if you create .env for secrets)
+.env
+
+# Ignore generated target folders inside module subpaths
+!**/src/main/**/target/
+!**/src/test/**/target/
