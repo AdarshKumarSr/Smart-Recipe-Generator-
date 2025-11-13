@@ -21,17 +21,17 @@ public class RecipeController {
         this.service = service;
     }
 
-    // ---------------------------------------------------------
+    // --------------------------------------------------
     // HEALTH CHECK
-    // ---------------------------------------------------------
+    // --------------------------------------------------
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
         return ResponseEntity.ok("recipe service alive ✅");
     }
 
-    // ---------------------------------------------------------
-    // DIRECT AI ENDPOINT (optional)
-    // ---------------------------------------------------------
+    // --------------------------------------------------
+    // AI RECIPE (MANUAL BUTTON FROM FRONTEND)
+    // --------------------------------------------------
     @PostMapping("/ai-recipe")
     public ResponseEntity<?> generateAIRecipe(@RequestBody Map<String, Object> request) {
         try {
@@ -43,9 +43,13 @@ public class RecipeController {
 
             String cleanJson = service.generateStructuredRecipeFromGemini(ingredients);
 
-            Map<String, Object> json = mapper.readValue(cleanJson, Map.class);
+            Map<String, Object> parsed = mapper.readValue(cleanJson, Map.class);
 
-            return ResponseEntity.ok(json);
+            return ResponseEntity.ok(Map.of(
+                    "ai", true,
+                    "recipe", parsed.get("recipe"),
+                    "score", parsed.get("score")
+            ));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -55,9 +59,9 @@ public class RecipeController {
     }
 
 
-    // ---------------------------------------------------------
-    // INGREDIENT-BASED SEARCH (WITH AI FALLBACK)
-    // ---------------------------------------------------------
+    // --------------------------------------------------
+    // INGREDIENT SEARCH + AI FALLBACK INDICATOR
+    // --------------------------------------------------
     @PostMapping("/find")
     public ResponseEntity<?> findRecipes(
             @RequestBody FindRequest req,
@@ -65,45 +69,29 @@ public class RecipeController {
             @RequestParam(required = false) String diet,
             @RequestParam(defaultValue = "5") int top
     ) {
-        // Extract ingredients
-        List<String> ingredients = new ArrayList<>();
 
-        if (req.getIngredients() != null && !req.getIngredients().isEmpty()) {
-            ingredients.addAll(req.getIngredients());
-        }
+        List<String> ingredients = service.extractIngredients(req);
 
-        if ((req.getIngredients() == null || req.getIngredients().isEmpty())
-                && req.getIngredientsText() != null) {
-            ingredients.addAll(service.parseTextIngredients(req.getIngredientsText()));
-        }
+        List<MatchResult> matches = service.findBestMatchesFromDB(ingredients, cuisine, diet, top);
 
-        // 1️⃣ TRY DATABASE MATCHES
-        List<MatchResult> matches = service.findBestMatchesWithFilters(ingredients, cuisine, diet, top);
-
-        // 2️⃣ IF DB FOUND RESULTS → RETURN THEM
+        // IF DB FOUND RESULTS → return them
         if (!matches.isEmpty()) {
-            return ResponseEntity.ok(matches);
+            return ResponseEntity.ok(Map.of(
+                    "ai", false,
+                    "results", matches
+            ));
         }
 
-        // 3️⃣ AI FALLBACK — DB returned nothing
-        try {
-            String aiJson = service.generateStructuredRecipeFromGemini(ingredients);
-
-            Map<String, Object> parsed = mapper.readValue(aiJson, Map.class);
-
-            return ResponseEntity.ok(parsed);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "AI fallback failed", "details", e.getMessage()));
-        }
+        // DB empty — frontend should show AI button
+        return ResponseEntity.ok(Map.of(
+                "ai", false,
+                "results", List.of()
+        ));
     }
 
-
-    // ---------------------------------------------------------
-    // ADVANCED FILTER ENDPOINT
-    // ---------------------------------------------------------
+    // --------------------------------------------------
+    // FILTER SEARCH
+    // --------------------------------------------------
     @GetMapping("/filter")
     public ResponseEntity<List<Recipe>> filterRecipes(
             @RequestParam(required = false) String diet,
@@ -114,15 +102,14 @@ public class RecipeController {
             @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "5") int top
     ) {
-        List<Recipe> filtered = service.advancedFilterRecipes(
-                diet, difficulty, maxTime, cuisine, minRating, tag, top
+        return ResponseEntity.ok(
+                service.advancedFilterRecipes(diet, difficulty, maxTime, cuisine, minRating, tag, top)
         );
-        return ResponseEntity.ok(filtered);
     }
 
-    // ---------------------------------------------------------
+    // --------------------------------------------------
     // GET ALL RECIPES
-    // ---------------------------------------------------------
+    // --------------------------------------------------
     @GetMapping
     public ResponseEntity<List<Recipe>> getAllRecipes() {
         return ResponseEntity.ok(service.getAllRecipes());

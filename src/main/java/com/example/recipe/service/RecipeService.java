@@ -1,10 +1,9 @@
 package com.example.recipe.service;
 
+import com.example.recipe.dto.FindRequest;
 import com.example.recipe.dto.MatchResult;
 import com.example.recipe.model.Recipe;
 import com.example.recipe.repository.RecipeRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import org.springframework.stereotype.Service;
 
@@ -22,17 +21,34 @@ public class RecipeService {
         this.geminiClient = geminiClient;
     }
 
-    // -------------------------------------------------------------
-    // 1️⃣ STRICT JSON Structured Gemini Generator (NEW + FINAL)
-    // -------------------------------------------------------------
+    // ----------------------------------------------------------
+    // Extract both formats safely
+    // ----------------------------------------------------------
+    public List<String> extractIngredients(FindRequest req) {
+        List<String> list = new ArrayList<>();
+
+        if (req.getIngredients() != null && !req.getIngredients().isEmpty()) {
+            list.addAll(req.getIngredients());
+        }
+
+        if (req.getIngredientsText() != null && !req.getIngredientsText().isBlank()) {
+            list.addAll(parseTextIngredients(req.getIngredientsText()));
+        }
+
+        return list.stream()
+                .map(this::normalize)
+                .distinct()
+                .toList();
+    }
+
+    // ----------------------------------------------------------
+    // Gemini Strict JSON Recipe Generator
+    // ----------------------------------------------------------
     public String generateStructuredRecipeFromGemini(List<String> ingredients) {
         try {
             String prompt = """
 You are a JSON generator.
-Your ONLY output must be strict valid JSON. 
-Do NOT include markdown, comments, backticks, or explanations.
-
-Return EXACTLY this structure:
+Your ONLY output must be strict valid JSON.
 
 {
   "recipe": {
@@ -57,72 +73,57 @@ Return EXACTLY this structure:
   "score": number
 }
 
-The ingredients are: %s
+NO Markdown, NO ```.
 
-Rules:
-- STRICT JSON only  
-- Do NOT return ```json or ```  
-- Do NOT return markdown  
-- All numbers must be numbers  
-- rating: 3.5–5  
-- calories: 150–800  
-- protein: 5–40  
+Ingredients = %s
 """.formatted(ingredients);
 
-            var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
+            var res = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
+            String text = res.text();
 
-            String text = response.text();
-
-            // CLEAN unwanted characters
-            text = text
-                    .replaceAll("(?i)```json", "")
-                    .replaceAll("(?i)```", "")
+            return text
+                    .replaceAll("```json", "")
+                    .replaceAll("```", "")
                     .replace("“", "\"")
                     .replace("”", "\"")
                     .trim();
 
-            System.out.println("🧠 CLEAN AI JSON:\n" + text);
-
-            return text;
-
         } catch (Exception e) {
-            e.printStackTrace();
             return "{\"error\":\"" + e.getMessage().replace("\"","'") + "\"}";
         }
     }
 
-    // -------------------------------------------------------------
-    // 2️⃣ Ingredient Normalizer
-    // -------------------------------------------------------------
+    // ----------------------------------------------------------
+    // Normalize
+    // ----------------------------------------------------------
     private String normalize(String s) {
         if (s == null) return null;
         s = s.toLowerCase().trim();
-        if (s.endsWith("es")) s = s.substring(0, s.length() - 2);
-        else if (s.endsWith("s")) s = s.substring(0, s.length() - 1);
+        if (s.endsWith("es")) return s.substring(0, s.length() - 2);
+        if (s.endsWith("s")) return s.substring(0, s.length() - 1);
         return s;
     }
 
-    // -------------------------------------------------------------
-    // 3️⃣ Parse comma-separated ingredients
-    // -------------------------------------------------------------
+    // ----------------------------------------------------------
+    // Parse Text Ingredients
+    // ----------------------------------------------------------
     public List<String> parseTextIngredients(String text) {
-        if (text == null || text.isBlank()) return Collections.emptyList();
         return Arrays.stream(text.split(","))
                 .map(String::trim)
-                .filter(t -> !t.isEmpty())
+                .filter(v -> !v.isEmpty())
                 .map(this::normalize)
-                .distinct()
                 .toList();
     }
 
+    // ----------------------------------------------------------
+    // DB Match Only (AI handled in controller)
+    // ----------------------------------------------------------
+    public List<MatchResult> findBestMatchesFromDB(List<String> ingredients,
+                                                   String cuisine,
+                                                   String diet,
+                                                   int limit) {
 
-    // -------------------------------------------------------------
-    // 4️⃣ Main Recipe Matcher + AI fallback
-    // -------------------------------------------------------------
-    public List<MatchResult> findBestMatchesWithFilters(List<String> ingredients, String cuisine, String diet, int limit) {
-        Set<String> normalized = ingredients.stream()
-                .map(this::normalize)
-                .collect(Collectors.toSet());
+        Set<String> normalized = ingredients.stream().map(this::normalize).collect(Collectors.toSet());
 
         List<Recipe> all = repo.findAll().stream()
                 .filter(r -> cuisine == null || (r.getCuisine() != null && r.getCuisine().equalsIgnoreCase(cuisine)))
@@ -137,8 +138,9 @@ Rules:
                     .filter(normalized::contains)
                     .count();
 
-            double ingredientScore = r.getIngredients().isEmpty() ? 0.0 : (double) matched / r.getIngredients().size();
+            double ingredientScore = r.getIngredients().isEmpty() ? 0 : (double) matched / r.getIngredients().size();
             double ratingScore = r.getRating() / 5.0;
+
             double finalScore = ingredientScore * 0.7 + ratingScore * 0.3;
 
             if (finalScore > 0.2) {
@@ -146,16 +148,15 @@ Rules:
             }
         }
 
-        // No results → AI fallback is handled in controller now
         return scored.stream()
                 .sorted(Comparator.comparingDouble(MatchResult::getScore).reversed())
                 .limit(limit)
                 .toList();
     }
 
-    // -------------------------------------------------------------
-    // 5️⃣ Advanced Filtering
-    // -------------------------------------------------------------
+    // ----------------------------------------------------------
+    // Filters
+    // ----------------------------------------------------------
     public List<Recipe> advancedFilterRecipes(String diet, String difficulty, Integer maxTime,
                                               String cuisine, Double minRating, String tag, int top) {
 
@@ -171,9 +172,6 @@ Rules:
                 .toList();
     }
 
-    // -------------------------------------------------------------
-    // 6️⃣ Return all recipes
-    // -------------------------------------------------------------
     public List<Recipe> getAllRecipes() {
         return repo.findAll();
     }
