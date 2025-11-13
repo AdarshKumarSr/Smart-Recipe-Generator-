@@ -124,9 +124,13 @@ Ingredients: %s
             double ratingScore = r.getRating() / 5.0;
             double finalScore = ingredientScore * 0.7 + ratingScore * 0.3;
 
-            if (finalScore > 0.2) {
+//            if (finalScore > 0.2) {
+//                scored.add(new MatchResult(r, finalScore));
+//            }
+            if (ingredientScore >= 0.2) {
                 scored.add(new MatchResult(r, finalScore));
             }
+
         }
 
         return scored.stream()
