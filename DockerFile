@@ -1,27 +1,54 @@
-# Use a lightweight Java runtime
-FROM eclipse-temurin:17-jdk-alpine
+# -------------------------
+# Stage 1 — Builder (Maven + JDK 17)
+# -------------------------
+FROM maven:3.9.4-eclipse-temurin-17 AS builder
 
-# Set working directory inside container
+WORKDIR /build
+
+# copy only what's needed to download dependencies first (speeds rebuilds)
+COPY pom.xml ./
+COPY .mvn .mvn
+COPY mvnw mvnw
+RUN chmod +x mvnw || true
+
+# download dependencies (offline step)
+RUN mvn -B -DskipTests dependency:go-offline
+
+# copy source and build
+COPY src ./src
+# Build the jar (skip tests by default for faster image build; remove -DskipTests for CI)
+RUN mvn -B -DskipTests package
+
+# -------------------------
+# Stage 2 — Runtime (lighter JRE)
+# -------------------------
+FROM eclipse-temurin:17-jre-jammy
+
+# create a non-root user for better security
+RUN useradd -m -u 1000 appuser
+
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml first (for dependency caching)
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
+# install curl for healthchecks (small, removed lists afterwards)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/*
 
-# 🧩 FIX: give execute permission to mvnw
-RUN chmod +x mvnw
+# copy built jar from builder stage (pattern matches the built jar)
+COPY --from=builder /build/target/*.jar app.jar
 
-# Download dependencies (helps with faster rebuilds)
-RUN ./mvnw dependency:go-offline
-
-# Copy the rest of the source code
-COPY src ./src
-
-# Build the application
-RUN ./mvnw clean package -DskipTests
-
-# Expose port 8080
+# expose the port your Spring Boot app listens on (you said production uses 8080)
 EXPOSE 8080
 
-# Run the Spring Boot JAR
-ENTRYPOINT ["java", "-jar", "target/recipe-backend-0.0.1-SNAPSHOT.jar"]
+# default JVM options you can override at runtime with -e JAVA_OPTS="..."
+ENV JAVA_OPTS="-Xms256m -Xmx512m -Djava.security.egd=file:/dev/./urandom"
+
+# switch to non-root user
+USER appuser
+
+# a simple healthcheck — adjust path if you use a different health endpoint
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -fsS --max-time 2 http://127.0.0.1:8080/api/recipes/ping || exit 1
+
+# start the app
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

@@ -39,13 +39,14 @@ public class RecipeBackendApplication {
 	@Bean
 	public CommandLineRunner initDatabase(RecipeRepository repo) {
 		return args -> {
-			if (repo.count() == 0) {
-				List<Recipe> seed = SeedData.createSeed();
-				repo.saveAll(seed);
-				System.out.println("✅ Seeded " + seed.size() + " recipes into MongoDB Atlas.");
-			} else {
-				System.out.println("ℹ️ Recipes already present: " + repo.count());
-			}
+			System.out.println("🧹 Clearing old recipes...");
+			repo.deleteAll();
+
+			List<Recipe> seed = SeedData.createSeed();
+			repo.saveAll(seed);
+
+			System.out.println("✅ Reseeded " + seed.size() + " recipes into MongoDB Atlas.");
 		};
 	}
+
 }

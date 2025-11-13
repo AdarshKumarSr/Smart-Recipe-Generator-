@@ -59,7 +59,52 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- ✅ OkHttp for making Gemini API HTTP requests -->
+		<dependency>
+			<groupId>com.google.genai</groupId>
+			<artifactId>google-genai</artifactId>
+			<version>0.8.0</version> <!-- or latest version -->
+		</dependency>
+
+<!--		google-->
+		<dependency>
+			<groupId>com.google.api-client</groupId>
+			<artifactId>google-api-client</artifactId>
+			<version>2.7.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.api-client</groupId>
+			<artifactId>google-api-client-jackson2</artifactId>
+			<version>2.7.0</version>
+		</dependency>
+
+<!--		jwt-->
+		<!-- JWT (Java JSON Web Tokens) -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.11.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.11.5</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.11.5</version>
+			<scope>runtime</scope>
+		</dependency>
+
 	</dependencies>
+
+
+
 
 	<build>
 		<plugins>
