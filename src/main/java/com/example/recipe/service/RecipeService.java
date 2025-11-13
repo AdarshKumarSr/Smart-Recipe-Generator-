@@ -6,8 +6,6 @@ import com.example.recipe.repository.RecipeRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
-import com.google.genai.types.GenerateContentResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -24,73 +22,78 @@ public class RecipeService {
         this.geminiClient = geminiClient;
     }
 
-    // ... your rest of the code ...
-    public String testGeminiConnection() {
-        try {
-            String prompt = "Say hello from RecipeBackend as a JSON: {\"message\": \"Hello from Gemini!\"}";
-            var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
-
-            String text = response.text();
-            System.out.println("🧠 Gemini test response: " + text);
-            return text;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Error: " + e.getMessage();
-        }
-    }
+    // -------------------------------------------------------------
+    // 1️⃣ STRICT JSON Structured Gemini Generator (NEW + FINAL)
+    // -------------------------------------------------------------
     public String generateStructuredRecipeFromGemini(List<String> ingredients) {
         try {
             String prompt = """
-                Generate one recipe in **strict JSON format** with this exact structure:
-                {
-                  "recipe": {
-                    "id": "<some unique string id>",
-                    "name": "String",
-                    "ingredients": ["String"],
-                    "timeMinutes": 0,
-                    "difficulty": "easy | medium | hard",
-                    "dietTags": ["String"],
-                    "calories": 0,
-                    "protein": 0,
-                    "instructions": "Short cooking summary",
-                    "imageUrl": "https://example.com/img.jpg",
-                    "youtubeLink": "https://youtube.com/...",
-                    "cuisine": "String",
-                    "rating": 0.0,
-                    "reviewsCount": 0,
-                    "tags": ["String"],
-                    "prepTime": "e.g. '10 min prep, 25 min cook'",
-                    "servingSize": "e.g. '3 servings'"
-                  },
-                  "score": 0.644
-                }
+You are a JSON generator.
+Your ONLY output must be strict valid JSON. 
+Do NOT include markdown, comments, backticks, or explanations.
 
-                The ingredients are: %s
+Return EXACTLY this structure:
 
-                Rules:
-                - Only return valid JSON (no markdown, no ``` fences)
-                - Keep rating realistic (3.5–5)
-                - Keep calories and protein numeric
-                - Cuisine should match the recipe type
-                - Give short but clear instructions
-                - Do not add extra keys.
-                """.formatted(ingredients);
+{
+  "recipe": {
+    "id": "string",
+    "name": "string",
+    "ingredients": ["string"],
+    "timeMinutes": number,
+    "difficulty": "easy" | "medium" | "hard",
+    "dietTags": ["string"],
+    "calories": number,
+    "protein": number,
+    "instructions": "string",
+    "imageUrl": "string",
+    "youtubeLink": "string",
+    "cuisine": "string",
+    "rating": number,
+    "reviewsCount": number,
+    "tags": ["string"],
+    "prepTime": "string",
+    "servingSize": "string"
+  },
+  "score": number
+}
+
+The ingredients are: %s
+
+Rules:
+- STRICT JSON only  
+- Do NOT return ```json or ```  
+- Do NOT return markdown  
+- All numbers must be numbers  
+- rating: 3.5–5  
+- calories: 150–800  
+- protein: 5–40  
+""".formatted(ingredients);
 
             var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
+
             String text = response.text();
 
-            System.out.println("🧠 Gemini Structured Recipe Response:\n" + text);
+            // CLEAN unwanted characters
+            text = text
+                    .replaceAll("(?i)```json", "")
+                    .replaceAll("(?i)```", "")
+                    .replace("“", "\"")
+                    .replace("”", "\"")
+                    .trim();
+
+            System.out.println("🧠 CLEAN AI JSON:\n" + text);
+
             return text;
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "{\"error\": \"" + e.getMessage().replace("\"", "'") + "\"}";
+            return "{\"error\":\"" + e.getMessage().replace("\"","'") + "\"}";
         }
     }
 
-
-
-    // 🧹 Normalize ingredient text: lowercase, trim, remove plurals
+    // -------------------------------------------------------------
+    // 2️⃣ Ingredient Normalizer
+    // -------------------------------------------------------------
     private String normalize(String s) {
         if (s == null) return null;
         s = s.toLowerCase().trim();
@@ -99,7 +102,9 @@ public class RecipeService {
         return s;
     }
 
-    // 🧾 Parse comma separated text into list
+    // -------------------------------------------------------------
+    // 3️⃣ Parse comma-separated ingredients
+    // -------------------------------------------------------------
     public List<String> parseTextIngredients(String text) {
         if (text == null || text.isBlank()) return Collections.emptyList();
         return Arrays.stream(text.split(","))
@@ -107,10 +112,13 @@ public class RecipeService {
                 .filter(t -> !t.isEmpty())
                 .map(this::normalize)
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    // ✅ Main recipe finder (with AI fallback)
+
+    // -------------------------------------------------------------
+    // 4️⃣ Main Recipe Matcher + AI fallback
+    // -------------------------------------------------------------
     public List<MatchResult> findBestMatchesWithFilters(List<String> ingredients, String cuisine, String diet, int limit) {
         Set<String> normalized = ingredients.stream()
                 .map(this::normalize)
@@ -130,79 +138,43 @@ public class RecipeService {
                     .count();
 
             double ingredientScore = r.getIngredients().isEmpty() ? 0.0 : (double) matched / r.getIngredients().size();
-            double ratingScore = (r.getRating() / 5.0);
-            double finalScore = (ingredientScore * 0.7) + (ratingScore * 0.3);
+            double ratingScore = r.getRating() / 5.0;
+            double finalScore = ingredientScore * 0.7 + ratingScore * 0.3;
 
             if (finalScore > 0.2) {
                 scored.add(new MatchResult(r, finalScore));
             }
         }
 
-        // 🧠 No matches? Generate from AI
-        if (scored.isEmpty()) {
-            System.out.println("⚠️ No local match found. Calling Gemini API...");
-            Recipe aiRecipe = generateRecipeFromGemini(ingredients);
-            if (aiRecipe != null) {
-                return List.of(new MatchResult(aiRecipe, 0.95));
-            }
-        }
-
+        // No results → AI fallback is handled in controller now
         return scored.stream()
                 .sorted(Comparator.comparingDouble(MatchResult::getScore).reversed())
                 .limit(limit)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    // ✅ Advanced filtering
+    // -------------------------------------------------------------
+    // 5️⃣ Advanced Filtering
+    // -------------------------------------------------------------
     public List<Recipe> advancedFilterRecipes(String diet, String difficulty, Integer maxTime,
                                               String cuisine, Double minRating, String tag, int top) {
-        List<Recipe> all = repo.findAll();
 
-        return all.stream()
+        return repo.findAll().stream()
                 .filter(r -> diet == null || r.getDietTags().contains(diet.toLowerCase()))
                 .filter(r -> difficulty == null || r.getDifficulty().equalsIgnoreCase(difficulty))
                 .filter(r -> maxTime == null || r.getTimeMinutes() <= maxTime)
                 .filter(r -> cuisine == null || (r.getCuisine() != null && r.getCuisine().equalsIgnoreCase(cuisine)))
                 .filter(r -> minRating == null || r.getRating() >= minRating)
-                .filter(r -> tag == null || (r.getTags() != null && r.getTags().stream()
-                        .anyMatch(t -> t.equalsIgnoreCase(tag))))
+                .filter(r -> tag == null || r.getTags().stream().anyMatch(t -> t.equalsIgnoreCase(tag)))
                 .sorted(Comparator.comparingDouble(Recipe::getRating).reversed())
                 .limit(top)
-                .collect(Collectors.toList());
+                .toList();
     }
 
+    // -------------------------------------------------------------
+    // 6️⃣ Return all recipes
+    // -------------------------------------------------------------
     public List<Recipe> getAllRecipes() {
         return repo.findAll();
-    }
-
-    // 🧠 Gemini SDK Integration
-    private Recipe generateRecipeFromGemini(List<String> ingredients) {
-        try {
-            String prompt = "Generate one realistic cooking recipe in JSON format for ingredients: "
-                    + ingredients + ". JSON fields must match: "
-                    + "name, ingredients, timeMinutes, difficulty, dietTags, calories, protein, steps, imageUrl, youtubeUrl, cuisine, rating, reviewsCount, tags, prepTime, servingSize. "
-                    + "Ensure the output is valid JSON and nothing else.";
-
-            GenerateContentResponse response =
-                    geminiClient.models.generateContent("gemini-2.5-flash", prompt, null);
-
-            String text = response.text();
-            ObjectMapper mapper = new ObjectMapper();
-
-            // Parse Gemini JSON into Recipe object
-            JsonNode recipeNode = mapper.readTree(text);
-            Recipe aiRecipe = mapper.treeToValue(recipeNode, Recipe.class);
-
-            // Save it for reuse
-            repo.save(aiRecipe);
-
-            System.out.println("✅ Gemini generated recipe: " + aiRecipe.getName());
-            return aiRecipe;
-
-        } catch (Exception e) {
-            System.err.println("❌ Gemini AI error: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
     }
 }

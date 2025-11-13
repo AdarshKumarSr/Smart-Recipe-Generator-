@@ -4,94 +4,106 @@ import com.example.recipe.dto.FindRequest;
 import com.example.recipe.dto.MatchResult;
 import com.example.recipe.model.Recipe;
 import com.example.recipe.service.RecipeService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/recipes")
 public class RecipeController {
 
     private final RecipeService service;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public RecipeController(RecipeService service) {
         this.service = service;
     }
 
-    // ✅ Health check
+    // ---------------------------------------------------------
+    // HEALTH CHECK
+    // ---------------------------------------------------------
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
         return ResponseEntity.ok("recipe service alive ✅");
     }
-    // 🧠 Test Gemini API connection
+
+    // ---------------------------------------------------------
+    // DIRECT AI ENDPOINT (optional)
+    // ---------------------------------------------------------
     @PostMapping("/ai-recipe")
-    public ResponseEntity<String> generateAIRecipe(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> generateAIRecipe(@RequestBody Map<String, Object> request) {
         try {
-            @SuppressWarnings("unchecked")
             List<String> ingredients = (List<String>) request.get("ingredients");
 
             if (ingredients == null || ingredients.isEmpty()) {
-                return ResponseEntity.badRequest().body("❌ Please provide a list of ingredients.");
+                return ResponseEntity.badRequest().body(Map.of("error", "Ingredients missing"));
             }
 
-            String aiResponse = service.generateStructuredRecipeFromGemini(ingredients);
+            String cleanJson = service.generateStructuredRecipeFromGemini(ingredients);
 
-            // 🧽 Cleanup extra Markdown fences if Gemini adds them
-            aiResponse = aiResponse
-                    .replaceAll("(?i)```json", "")
-                    .replaceAll("(?i)```", "")
-                    .trim();
+            Map<String, Object> json = mapper.readValue(cleanJson, Map.class);
 
-            return ResponseEntity.ok("✅ Gemini API working! \nResponse: ```json\n" + aiResponse + "\n```");
+            return ResponseEntity.ok(json);
 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body("❌ Gemini API failed: " + e.getMessage());
+                    .body(Map.of("error", "Gemini failed", "details", e.getMessage()));
         }
     }
 
 
-
-
-    /**
-     * 🍳 Ingredient-based recipe finder
-     * Accepts:
-     * - {"ingredients": ["tomato","egg"]}
-     * - {"ingredientsText": "tomato, egg"}
-     * Optional filters: cuisine, diet
-     */
+    // ---------------------------------------------------------
+    // INGREDIENT-BASED SEARCH (WITH AI FALLBACK)
+    // ---------------------------------------------------------
     @PostMapping("/find")
-    public ResponseEntity<List<MatchResult>> findRecipes(
+    public ResponseEntity<?> findRecipes(
             @RequestBody FindRequest req,
             @RequestParam(required = false) String cuisine,
             @RequestParam(required = false) String diet,
             @RequestParam(defaultValue = "5") int top
     ) {
+        // Extract ingredients
         List<String> ingredients = new ArrayList<>();
 
         if (req.getIngredients() != null && !req.getIngredients().isEmpty()) {
             ingredients.addAll(req.getIngredients());
         }
 
-        if ((req.getIngredients() == null || req.getIngredients().isEmpty()) && req.getIngredientsText() != null) {
-            ingredients.addAll(service.parseTextIngredients(req.getIngredientsText()));
-        } else if (req.getIngredientsText() != null && !req.getIngredientsText().isBlank()) {
+        if ((req.getIngredients() == null || req.getIngredients().isEmpty())
+                && req.getIngredientsText() != null) {
             ingredients.addAll(service.parseTextIngredients(req.getIngredientsText()));
         }
 
-        List<MatchResult> result = service.findBestMatchesWithFilters(ingredients, cuisine, diet, top);
-        return ResponseEntity.ok(result);
+        // 1️⃣ TRY DATABASE MATCHES
+        List<MatchResult> matches = service.findBestMatchesWithFilters(ingredients, cuisine, diet, top);
+
+        // 2️⃣ IF DB FOUND RESULTS → RETURN THEM
+        if (!matches.isEmpty()) {
+            return ResponseEntity.ok(matches);
+        }
+
+        // 3️⃣ AI FALLBACK — DB returned nothing
+        try {
+            String aiJson = service.generateStructuredRecipeFromGemini(ingredients);
+
+            Map<String, Object> parsed = mapper.readValue(aiJson, Map.class);
+
+            return ResponseEntity.ok(parsed);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "AI fallback failed", "details", e.getMessage()));
+        }
     }
 
-    /**
-     * 🧩 Filter recipes by various properties
-     * Example:
-     * /api/recipes/filter?diet=vegetarian&difficulty=easy&maxTime=30&cuisine=Indian&minRating=4.5&tag=spicy
-     */
+
+    // ---------------------------------------------------------
+    // ADVANCED FILTER ENDPOINT
+    // ---------------------------------------------------------
     @GetMapping("/filter")
     public ResponseEntity<List<Recipe>> filterRecipes(
             @RequestParam(required = false) String diet,
@@ -102,11 +114,15 @@ public class RecipeController {
             @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "5") int top
     ) {
-        List<Recipe> filtered = service.advancedFilterRecipes(diet, difficulty, maxTime, cuisine, minRating, tag, top);
+        List<Recipe> filtered = service.advancedFilterRecipes(
+                diet, difficulty, maxTime, cuisine, minRating, tag, top
+        );
         return ResponseEntity.ok(filtered);
     }
 
-    // 🧠 Get all recipes
+    // ---------------------------------------------------------
+    // GET ALL RECIPES
+    // ---------------------------------------------------------
     @GetMapping
     public ResponseEntity<List<Recipe>> getAllRecipes() {
         return ResponseEntity.ok(service.getAllRecipes());
