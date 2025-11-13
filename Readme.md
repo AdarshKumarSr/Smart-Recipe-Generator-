@@ -1,71 +1,113 @@
 
 ---
 
-## 📘 Smart Recipe Generator — Backend (v1)
+#  **Smart Recipe Generator - Backend (v2)**
 
-### 🚀 Overview
+### **Spring Boot + MongoDB + Gemini AI + Google OAuth + Docker**
 
-This is the **backend service** for the Smart Recipe Generator project.
-It’s built with **Spring Boot + MongoDB Atlas** and provides APIs for:
+🔗 **Live API Base URL:**
+👉 [https://smart-recipe-generator-qs0a.onrender.com/](https://smart-recipe-generator-qs0a.onrender.com/)
 
-* 🥗 Ingredient-based recipe suggestions
-* 🔍 Filtering recipes by diet, difficulty, and cooking time
-* ⚙️ Easily extendable for future AI integration (Gemini, etc.)
+This is the backend of **Smart Recipe Generator** — an AI-powered cooking assistant that helps users discover, filter, and generate recipes intelligently.
 
----
+It includes:
 
-## 🏗️ Tech Stack
-
-| Component             | Technology                      |
-| --------------------- | ------------------------------- |
-| **Backend Framework** | Spring Boot (v3.5.x)            |
-| **Database**          | MongoDB Atlas (Cloud)           |
-| **Build Tool**        | Maven                           |
-| **Language**          | Java 17+                        |
-| **IDE**               | IntelliJ IDEA Community Edition |
-| **Testing Tool**      | Postman                         |
+* 🥗 Ingredient-based smart matching
+* 🔍 Advanced recipe filtering
+* 🤖 AI-powered recipe generator (Gemini Fallback System)
+* 🔐 Google OAuth Login + JWT
+* 🐳 Dockerized for easy cloud deployment
+* ☁️ Fully deployed on **Render**
 
 ---
 
-## 📂 Project Structure
+# 🏗️ **Tech Stack**
+
+| Component  | Technology                  |
+| ---------- | --------------------------- |
+| Backend    | **Spring Boot 3.5.x**       |
+| Database   | **MongoDB Atlas**           |
+| AI         | **Google Gemini 2.0 Flash** |
+| Auth       | **Google OAuth + JWT**      |
+| Build Tool | **Maven**                   |
+| JVM        | **Java 17**                 |
+| Deployment | **Docker + Render**         |
+| Cloud DB   | MongoDB Atlas               |
+
+---
+
+# 📦 **Core Features**
+
+### ✅ Ingredient-Based Recipe Matching
+
+Find best recipe matches using score-based similarity.
+
+### ✅ AI Recipe Generator (Auto-Fallback)
+
+If DB has no match → Gemini generates a structured recipe.
+
+### ✅ Advanced Filtering
+
+Supports:
+
+* diet
+* difficulty
+* cuisine
+* maxTime
+* tags
+* minRating
+
+### ✅ Google Sign-In + JWT
+
+Secure authentication using Google ID token.
+
+### ✅ Full Docker Support
+
+Production-ready Dockerfile for Render, AWS, DigitalOcean, etc.
+
+---
+
+# 📁 **Project Structure**
 
 ```
 recipe-backend/
- ┣ src/
- ┃ ┣ main/
- ┃ ┃ ┣ java/com/example/recipe/
- ┃ ┃ ┃ ┣ controller/     → REST API controllers
- ┃ ┃ ┃ ┣ dto/            → Request/response DTOs
- ┃ ┃ ┃ ┣ model/          → MongoDB document models
- ┃ ┃ ┃ ┣ repository/     → MongoRepository interfaces
- ┃ ┃ ┃ ┣ service/        → Business logic layer
- ┃ ┃ ┃ ┗ RecipeBackendApplication.java
- ┃ ┃ ┣ resources/
- ┃ ┃ ┃ ┣ application.properties
- ┃ ┃ ┃ ┗ (static/templates - optional)
- ┣ pom.xml               → Project dependencies
- ┗ README.md              → Documentation (this file)
+ ┣ controller/
+ ┣ dto/
+ ┣ model/
+ ┣ repository/
+ ┣ service/
+ ┣ SeedData.java
+ ┣ Dockerfile
+ ┣ pom.xml
+ ┗ README.md
 ```
 
 ---
 
-## ⚙️ Current Features (as of now)
+# 🌐 **API Endpoints**
 
-### ✅ 1. MongoDB Integration
+---
 
-* Connected to **MongoDB Atlas Cloud Cluster**
-* Configured via `application.properties`
-* Auto-seeds 15 sample recipes on startup (`SeedData.java`)
+## 🔹 1. Health Check
 
-### ✅ 2. Ingredient-Based Recipe Matching API
+**GET** `/api/recipes/ping`
 
-**Endpoint:**
+Response:
 
 ```
-POST /api/recipes/find
+recipe service alive ✅
 ```
 
-**Request Body Options:**
+---
+
+## 🔹 2. Ingredient-Based Recipe Matching
+
+DB → returns **list**
+AI → returns **single object**
+
+**POST** `/api/recipes/find`
+
+### Request Body
 
 ```json
 {
@@ -73,137 +115,166 @@ POST /api/recipes/find
 }
 ```
 
-or
+### DB Response Example
+
+```json
+[
+  {
+    "recipe": { "name": "Egg Bhurji", ... },
+    "score": 0.52
+  }
+]
+```
+
+### AI Response Example
 
 ```json
 {
-  "ingredientsText": "tomato, egg"
+  "recipe": { ... },
+  "score": 0.64
 }
 ```
 
-**Response Example:**
-
-```json
-[
-  {
-    "recipe": { "name": "Egg Bhurji", "difficulty": "easy", "calories": 210 },
-    "score": 0.33
-  }
-]
-```
-
-**Features:**
-
-* Matches recipes based on common ingredients
-* Returns top N matches (default: 5)
-* Supports both list & text input
-
 ---
 
-### ✅ 3. Recipe Filtering API
+## 🔹 3. AI Recipe Generator (Direct)
 
-**Endpoint:**
+**POST** `/api/recipes/ai-recipe`
 
-```
-GET /api/recipes/filter
-```
-
-**Query Params (optional):**
-
-| Param        | Type    | Example                     | Description                      |
-| ------------ | ------- | --------------------------- | -------------------------------- |
-| `diet`       | String  | vegetarian / non-vegetarian | Filter by diet tag               |
-| `difficulty` | String  | easy / medium / hard        | Filter by recipe difficulty      |
-| `maxTime`    | Integer | 20                          | Filter by cooking time (minutes) |
-
-**Examples:**
-
-```
-GET /api/recipes/filter?diet=vegetarian
-GET /api/recipes/filter?difficulty=easy&maxTime=20
-GET /api/recipes/filter?diet=non-vegetarian&difficulty=medium&maxTime=30
-```
-
-**Response Example:**
+Request:
 
 ```json
-[
-  {
-    "name": "Simple Omelette",
-    "dietTags": ["non-vegetarian"],
-    "difficulty": "easy",
-    "timeMinutes": 10
-  }
-]
-```
-
----
-
-### ✅ 4. Health Check Endpoint
-
-```
-GET /api/recipes/ping
+{
+  "ingredients": ["pineapple", "cheese", "coriander"]
+}
 ```
 
 Response:
 
+```json
+{
+  "recipe": {
+    "id": "generated-123",
+    "name": "Pineapple Fusion Curry",
+    ...
+  },
+  "score": 0.88
+}
 ```
-recipe service alive
+
+---
+
+## 🔹 4. Filter Recipes
+
+**GET** `/api/recipes/filter`
+
+Example:
+
+```
+/api/recipes/filter?diet=vegetarian&difficulty=easy&maxTime=20
 ```
 
 ---
 
-## 🧠 Architecture Summary
+## 🔹 5. Google OAuth Login
 
-* **Controller Layer:** Handles HTTP requests/responses
-* **Service Layer:** Business logic (matching & filtering)
-* **Repository Layer:** MongoDB operations using `MongoRepository`
-* **Model Layer:** Recipe document structure
-* **Seed Layer:** Auto-generates sample data at startup
+**POST** `/api/auth/google`
 
----
+Request:
 
-## 🧪 Tested API Endpoints
-
-| Method | Endpoint              | Description                            |
-| ------ | --------------------- | -------------------------------------- |
-| `GET`  | `/api/recipes/ping`   | Health check                           |
-| `POST` | `/api/recipes/find`   | Find recipes by ingredients            |
-| `GET`  | `/api/recipes/filter` | Filter recipes by diet/difficulty/time |
+```json
+{ "token": "GOOGLE_ID_TOKEN" }
+```
 
 ---
 
-## 📦 Future Scope
+# 🤖 **AI Output Schema**
 
-✅ Integrate **Gemini API** for natural language recipe suggestions
-✅ Add **image-to-ingredient recognition**
-✅ User Authentication (Google OAuth planned)
-✅ Save & rate recipes (user preferences)
+Gemini always returns this guaranteed JSON format:
+
+```json
+{
+  "recipe": {
+    "id": "string",
+    "name": "string",
+    "ingredients": ["string"],
+    "timeMinutes": 0,
+    "difficulty": "easy",
+    "dietTags": ["string"],
+    "calories": 0,
+    "protein": 0,
+    "instructions": "string",
+    "imageUrl": "string",
+    "youtubeLink": "string",
+    "cuisine": "string",
+    "rating": 0,
+    "reviewsCount": 0,
+    "tags": ["string"],
+    "prepTime": "string",
+    "servingSize": "string"
+  },
+  "score": 0.0
+}
+```
 
 ---
 
-## 🧰 Run Locally
+# 🧰 **Local Development**
 
-### Prerequisites:
+### Build
 
-* Java 17+
-* Maven
-* MongoDB Atlas connection string in `application.properties`
+```bash
+./mvnw clean package
+```
 
-### Start the app:
+### Run
+
+```bash
+java -jar target/recipe-backend-0.0.1-SNAPSHOT.jar
+```
+
+or
 
 ```bash
 mvn spring-boot:run
 ```
 
-or via IntelliJ → ▶ `RecipeBackendApplication`
+---
+
+# 🐳 **Docker (Production Ready)**
+
+### Build Image
+
+```bash
+docker build -t recipe-api .
+```
+
+### Run Container
+
+```bash
+docker run -p 8080:8080 recipe-api
+```
 
 ---
 
-## 🌐 Example Local URLs
+# 🌱 **Seed Data**
 
-* Health Check → [http://localhost:8080/api/recipes/ping](http://localhost:8080/api/recipes/ping)
-* Filter → [http://localhost:8080/api/recipes/filter?difficulty=easy](http://localhost:8080/api/recipes/filter?difficulty=easy)
-* Ingredient Match → POST [http://localhost:8080/api/recipes/find](http://localhost:8080/api/recipes/find)
+`SeedData.java` automatically loads **20+ real-world recipes** into MongoDB at startup.
+
+---
+
+# 🎯 **Future Enhancements**
+
+* 🍽️ Weekly meal planner
+* 📸 Upload image → detect ingredients (CV)
+* ⭐ User favorites & rating system
+* 🧬 Personalized AI recommendations
+
+---
+
+# ❤️ Author
+
+Built with love, frustration, coffee, and countless debugging sessions ☕🔥
+**— Adarsh**
 
 ---
