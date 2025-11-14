@@ -15,6 +15,7 @@ public class RecipeService {
 
     private final RecipeRepository repo;
     private final Client geminiClient;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public RecipeService(RecipeRepository repo, Client geminiClient) {
         this.repo = repo;
@@ -22,54 +23,55 @@ public class RecipeService {
     }
 
     // -------------------------------------------------------------
-    // 🔥 NEW FUNCTION — Detect whether ingredients are real foods
+    // 🔥 AI: Determine if ingredients are real edible food
     // -------------------------------------------------------------
     public boolean isLikelyFood(List<String> ingredients) {
         try {
-            if (ingredients == null || ingredients.isEmpty()) return true;
+            if (ingredients == null || ingredients.isEmpty())
+                return true;
 
             String prompt = """
-            You are a strict food validator.
-            Determine if the following items are real edible food ingredients.
+                You are a strict food validator.
+                Determine if MOST of these items are real, edible food ingredients.
 
-            Return ONLY:
-            "yes" → if MOST items are actual food
-            "no" → if items are mostly NOT food
-            Items: %s
-            """.formatted(ingredients);
+                Return ONLY:
+                yes
+                or
+                no
 
-            var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
-            String text = response.text().trim().toLowerCase();
+                Items: %s
+                """.formatted(ingredients);
 
-            return text.contains("yes");
+            var res = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
+            String out = res.text().trim().toLowerCase();
+
+            return out.equals("yes") || out.contains("yes");
 
         } catch (Exception e) {
-            return true; // fail-safe → assume food
+            // fail-safe: assume food so we don't block legitimate requests when AI check fails
+            return true;
         }
     }
 
 
     // -------------------------------------------------------------
-    // STRICT GEMINI GENERATOR
+    // STRICT GEMINI GENERATOR (JSON + BASE64 IMAGE)
     // -------------------------------------------------------------
     public String generateStructuredRecipeFromGemini(List<String> ingredients) {
         try {
-
+            // Build prompt
             String prompt = """
 You are an AI that MUST output ONLY valid JSON and nothing else.
-Never output markdown, code blocks, explanations, or comments.
 
 STRICT RULES:
 - Output EXACTLY one JSON object.
-- No text before or after JSON.
-- Escape all quotes inside strings.
-- No newlines inside strings unless escaped (\\n).
-- No trailing commas.
-- EVERY field required and must be high-quality.
+- No markdown, no code fences.
+- No text outside JSON.
+- Escape internal quotes properly.
 
 IMAGE RULE:
-Generate a realistic dish image and return it as BASE64 JPEG inside imageBase64.
-Do NOT return a URL.
+Generate a REALISTIC dish photo and return it as BASE64 JPEG inside imageBase64.
+Do NOT return URLs.
 
 OUTPUT FORMAT:
 {
@@ -99,58 +101,60 @@ INGREDIENTS: %s
 """.formatted(ingredients);
 
             var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
-
             String content = response.text();
 
+            // Clean code fences if present (safe)
             content = content.replaceAll("(?i)```json", "");
             content = content.replaceAll("(?i)```", "");
             content = content.trim();
 
+            // Attempt to extract JSON from first { to last }
             if (content.contains("{") && content.contains("}")) {
                 content = content.substring(content.indexOf("{"), content.lastIndexOf("}") + 1);
             }
 
-            content = content.replaceAll("\\\\\"", "\"");
-            content = content.replaceAll("\"\\s*:\\s*\"", "\": \"");
+            // Validate JSON strictly using Jackson
+            mapper.readTree(content); // will throw if invalid
 
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                mapper.readTree(content);
-                return content;
-            } catch (Exception jsonError) {
-                System.out.println("⚠ Gemini returned invalid JSON, fallback applied: " + jsonError.getMessage());
-            }
-
-            return """
-        {
-          "recipe": {
-            "id": "AI-FALLBACK",
-            "name": "AI Generated Dish",
-            "ingredients": ["%s"],
-            "timeMinutes": 20,
-            "difficulty": "easy",
-            "dietTags": [],
-            "calories": 300,
-            "protein": 10,
-            "instructions": "No instructions available.",
-            "imageBase64": "",
-            "youtubeLink": "",
-            "cuisine": "Fusion",
-            "rating": 4.0,
-            "reviewsCount": 20,
-            "tags": [],
-            "prepTime": "10 minutes",
-            "servingSize": "2 servings"
-          },
-          "score": 0.5
-        }
-        """.formatted(String.join(",", ingredients));
+            // valid JSON -> return as-is
+            return content;
 
         } catch (Exception e) {
-            return "{\"error\":\"" + e.getMessage().replace("\"", "'") + "\"}";
+            // On any failure, return a safe fallback JSON produced by ObjectMapper
+            try {
+                Map<String, Object> fallback = new HashMap<>();
+                Map<String, Object> recipe = new HashMap<>();
+
+                recipe.put("id", "AI-FALLBACK");
+                recipe.put("name", "AI Generated Dish");
+                // ingredients: safe list; if original list null -> empty
+                recipe.put("ingredients", ingredients == null ? List.of() : ingredients);
+                recipe.put("timeMinutes", 20);
+                recipe.put("difficulty", "easy");
+                recipe.put("dietTags", List.of());
+                recipe.put("calories", 300);
+                recipe.put("protein", 10);
+                recipe.put("instructions", "No instructions available.");
+                recipe.put("imageBase64", "");
+                recipe.put("youtubeLink", "");
+                recipe.put("cuisine", "Fusion");
+                recipe.put("rating", 4.0);
+                recipe.put("reviewsCount", 20);
+                recipe.put("tags", List.of());
+                recipe.put("prepTime", "10 minutes");
+                recipe.put("servingSize", "2 servings");
+
+                fallback.put("recipe", recipe);
+                fallback.put("score", 0.5);
+
+                return mapper.writeValueAsString(fallback);
+
+            } catch (Exception ex) {
+                // Last resort: minimal JSON string
+                return "{\"recipe\":{\"id\":\"AI-FALLBACK\",\"name\":\"AI Generated Dish\"},\"score\":0.5}";
+            }
         }
     }
-
 
     // -------------------------------------------------------------
     // NORMALIZE INGREDIENT
@@ -177,16 +181,20 @@ INGREDIENTS: %s
     }
 
     // -------------------------------------------------------------
-    // MAIN MATCHER — DB ONLY
+    // DB MATCHER WITH ≥ 0.5 THRESHOLD (STRICT)
     // -------------------------------------------------------------
-    public List<MatchResult> findBestMatchesWithFilters(List<String> ingredients,
-                                                        String cuisine,
-                                                        String diet,
-                                                        int limit) {
+    public List<MatchResult> findBestMatchesWithFilters(
+            List<String> ingredients,
+            String cuisine,
+            String diet,
+            int limit
+    ) {
 
-        Set<String> normalized = ingredients.stream()
-                .map(this::normalize)
-                .collect(Collectors.toSet());
+        Set<String> normalized = (ingredients == null)
+                ? Collections.emptySet()
+                : ingredients.stream().map(this::normalize).collect(Collectors.toSet());
+
+        boolean edible = isLikelyFood(ingredients);
 
         List<Recipe> all = repo.findAll().stream()
                 .filter(r -> cuisine == null || (r.getCuisine() != null && r.getCuisine().equalsIgnoreCase(cuisine)))
@@ -201,11 +209,12 @@ INGREDIENTS: %s
                     .filter(normalized::contains)
                     .count();
 
-            double ingredientScore = (double) matched / r.getIngredients().size();
+            double ingredientScore = (double) matched / Math.max(1, r.getIngredients().size());
             double ratingScore = r.getRating() / 5.0;
             double finalScore = ingredientScore * 0.7 + ratingScore * 0.3;
 
-            if (ingredientScore >= 0.2) {
+            // Strict: only accept DB results when input is likely-food AND ingredient coverage >= 0.5
+            if (edible && ingredientScore >= 0.5) {
                 scored.add(new MatchResult(r, finalScore));
             }
         }
@@ -217,7 +226,7 @@ INGREDIENTS: %s
     }
 
     // -------------------------------------------------------------
-    // ADVANCED FILTER
+    // FILTER SYSTEM
     // -------------------------------------------------------------
     public List<Recipe> advancedFilterRecipes(String diet, String difficulty, Integer maxTime,
                                               String cuisine, Double minRating, String tag, int top) {

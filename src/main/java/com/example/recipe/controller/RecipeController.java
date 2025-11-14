@@ -21,17 +21,13 @@ public class RecipeController {
         this.service = service;
     }
 
-    // ---------------------------------------------------------
-    // HEALTH CHECK
-    // ---------------------------------------------------------
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
         return ResponseEntity.ok("recipe service alive ✅");
     }
 
-
     // ---------------------------------------------------------
-    // SAFE JSON PARSER (bulletproof)
+    // Safe JSON parser
     // ---------------------------------------------------------
     private Map<String, Object> safeParseJson(String raw) {
         try {
@@ -39,12 +35,12 @@ public class RecipeController {
         } catch (Exception e) {
             System.out.println("⚠ AI JSON parse failed: " + e.getMessage());
 
-            // Fallback JSON
             Map<String, Object> fallback = new HashMap<>();
-            Map<String, Object> recipe = new HashMap<>();
 
+            // Build full recipe map safely (avoid Map.of limit)
+            Map<String, Object> recipe = new HashMap<>();
             recipe.put("id", "AI-FALLBACK");
-            recipe.put("name", "AI Generated Recipe");
+            recipe.put("name", "AI Generated Dish");
             recipe.put("ingredients", List.of());
             recipe.put("timeMinutes", 20);
             recipe.put("difficulty", "easy");
@@ -70,7 +66,7 @@ public class RecipeController {
 
 
     // ---------------------------------------------------------
-    // DIRECT AI ENDPOINT (foolproof)
+    // ⁠AI RECIPE ENDPOINT (guarded)
     // ---------------------------------------------------------
     @PostMapping("/ai-recipe")
     public ResponseEntity<?> generateAIRecipe(@RequestBody Map<String, Object> request) {
@@ -82,8 +78,6 @@ public class RecipeController {
             }
 
             String raw = service.generateStructuredRecipeFromGemini(ingredients);
-
-            // Always safe parse
             Map<String, Object> json = safeParseJson(raw);
 
             return ResponseEntity.ok(json);
@@ -95,9 +89,8 @@ public class RecipeController {
         }
     }
 
-
     // ---------------------------------------------------------
-    // FIND RECIPES (DB + AI fallback) (foolproof)
+    // /find → DB first → if weak/no match → tell frontend AI needed
     // ---------------------------------------------------------
     @PostMapping("/find")
     public ResponseEntity<?> findRecipes(
@@ -107,7 +100,6 @@ public class RecipeController {
             @RequestParam(defaultValue = "5") int top
     ) {
 
-        // Extract ingredients
         List<String> ingredients = new ArrayList<>();
 
         if (req.getIngredients() != null && !req.getIngredients().isEmpty()) {
@@ -119,7 +111,7 @@ public class RecipeController {
             ingredients.addAll(service.parseTextIngredients(req.getIngredientsText()));
         }
 
-        // 1️⃣ Try database matches first
+        // 1️⃣ Try DB with strict ≥ 0.5 threshold
         List<MatchResult> results =
                 service.findBestMatchesWithFilters(ingredients, cuisine, diet, top);
 
@@ -127,25 +119,10 @@ public class RecipeController {
             return ResponseEntity.ok(results);
         }
 
-        // 2️⃣ AI fallback (safe)
-        try {
-            String raw = service.generateStructuredRecipeFromGemini(ingredients);
-            Map<String, Object> parsed = safeParseJson(raw);
-
-            return ResponseEntity.ok(parsed);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            // return fallback & avoid crash
-            return ResponseEntity.ok(safeParseJson("{}"));
-        }
+        // 2️⃣ No match → Tell frontend to show AI button
+        return ResponseEntity.ok(Map.of("aiSuggested", true));
     }
 
-
-    // ---------------------------------------------------------
-    // FILTER RECIPES
-    // ---------------------------------------------------------
     @GetMapping("/filter")
     public ResponseEntity<List<Recipe>> filterRecipes(
             @RequestParam(required = false) String diet,
@@ -161,9 +138,6 @@ public class RecipeController {
         );
     }
 
-    // ---------------------------------------------------------
-    // GET ALL RECIPES
-    // ---------------------------------------------------------
     @GetMapping
     public ResponseEntity<List<Recipe>> getAllRecipes() {
         return ResponseEntity.ok(service.getAllRecipes());
