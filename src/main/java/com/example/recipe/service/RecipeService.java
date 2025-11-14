@@ -22,12 +22,39 @@ public class RecipeService {
     }
 
     // -------------------------------------------------------------
+    // 🔥 NEW FUNCTION — Detect whether ingredients are real foods
+    // -------------------------------------------------------------
+    public boolean isLikelyFood(List<String> ingredients) {
+        try {
+            if (ingredients == null || ingredients.isEmpty()) return true;
+
+            String prompt = """
+            You are a strict food validator.
+            Determine if the following items are real edible food ingredients.
+
+            Return ONLY:
+            "yes" → if MOST items are actual food
+            "no" → if items are mostly NOT food
+            Items: %s
+            """.formatted(ingredients);
+
+            var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
+            String text = response.text().trim().toLowerCase();
+
+            return text.contains("yes");
+
+        } catch (Exception e) {
+            return true; // fail-safe → assume food
+        }
+    }
+
+
+    // -------------------------------------------------------------
     // STRICT GEMINI GENERATOR
     // -------------------------------------------------------------
     public String generateStructuredRecipeFromGemini(List<String> ingredients) {
         try {
 
-            // 1️⃣ — FOOLPROOF PROMPT
             String prompt = """
 You are an AI that MUST output ONLY valid JSON and nothing else.
 Never output markdown, code blocks, explanations, or comments.
@@ -71,36 +98,29 @@ OUTPUT FORMAT:
 INGREDIENTS: %s
 """.formatted(ingredients);
 
-
-            // 2️⃣ — CALL GEMINI
             var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
 
             String content = response.text();
 
-            // 3️⃣ — REMOVE CODEBLOCKS + TRASH
             content = content.replaceAll("(?i)```json", "");
             content = content.replaceAll("(?i)```", "");
             content = content.trim();
 
-            // 4️⃣ — EXTRACT ONLY VALID JSON BETWEEN FIRST { and LAST }
             if (content.contains("{") && content.contains("}")) {
                 content = content.substring(content.indexOf("{"), content.lastIndexOf("}") + 1);
             }
 
-            // 5️⃣ — Replace any broken quotes
             content = content.replaceAll("\\\\\"", "\"");
             content = content.replaceAll("\"\\s*:\\s*\"", "\": \"");
 
-            // 6️⃣ — Validate JSON before returning
             ObjectMapper mapper = new ObjectMapper();
             try {
                 mapper.readTree(content);
-                return content;  // VALID JSON
+                return content;
             } catch (Exception jsonError) {
                 System.out.println("⚠ Gemini returned invalid JSON, fallback applied: " + jsonError.getMessage());
             }
 
-            // 7️⃣ — Last resort fallback
             return """
         {
           "recipe": {
@@ -133,92 +153,88 @@ INGREDIENTS: %s
 
 
     // -------------------------------------------------------------
-                // NORMALIZE INGREDIENT
-                // -------------------------------------------------------------
-                private String normalize(String s) {
-                    if (s == null) return null;
-                    s = s.toLowerCase().trim();
-                    if (s.endsWith("es")) s = s.substring(0, s.length() - 2);
-                    else if (s.endsWith("s")) s = s.substring(0, s.length() - 1);
-                    return s;
-                }
+    // NORMALIZE INGREDIENT
+    // -------------------------------------------------------------
+    private String normalize(String s) {
+        if (s == null) return null;
+        s = s.toLowerCase().trim();
+        if (s.endsWith("es")) s = s.substring(0, s.length() - 2);
+        else if (s.endsWith("s")) s = s.substring(0, s.length() - 1);
+        return s;
+    }
 
-                // -------------------------------------------------------------
-                // PARSE TEXT INGREDIENTS
-                // -------------------------------------------------------------
-                public List<String> parseTextIngredients(String text) {
-                    if (text == null || text.isBlank()) return Collections.emptyList();
-                    return Arrays.stream(text.split(","))
-                            .map(String::trim)
-                            .map(this::normalize)
-                            .filter(x -> !x.isEmpty())
-                            .distinct()
-                            .toList();
-                }
+    // -------------------------------------------------------------
+    // PARSE TEXT INGREDIENTS
+    // -------------------------------------------------------------
+    public List<String> parseTextIngredients(String text) {
+        if (text == null || text.isBlank()) return Collections.emptyList();
+        return Arrays.stream(text.split(","))
+                .map(String::trim)
+                .map(this::normalize)
+                .filter(x -> !x.isEmpty())
+                .distinct()
+                .toList();
+    }
 
-                // -------------------------------------------------------------
-                // MAIN MATCHER — DB ONLY (AI fallback is in controller)
-                // -------------------------------------------------------------
-                public List<MatchResult> findBestMatchesWithFilters(List<String> ingredients,
-                                                                    String cuisine,
-                                                                    String diet,
-                                                                    int limit) {
+    // -------------------------------------------------------------
+    // MAIN MATCHER — DB ONLY
+    // -------------------------------------------------------------
+    public List<MatchResult> findBestMatchesWithFilters(List<String> ingredients,
+                                                        String cuisine,
+                                                        String diet,
+                                                        int limit) {
 
-                    Set<String> normalized = ingredients.stream()
-                            .map(this::normalize)
-                            .collect(Collectors.toSet());
+        Set<String> normalized = ingredients.stream()
+                .map(this::normalize)
+                .collect(Collectors.toSet());
 
-                    List<Recipe> all = repo.findAll().stream()
-                            .filter(r -> cuisine == null || (r.getCuisine() != null && r.getCuisine().equalsIgnoreCase(cuisine)))
-                            .filter(r -> diet == null || (r.getDietTags() != null && r.getDietTags().contains(diet.toLowerCase())))
-                            .toList();
+        List<Recipe> all = repo.findAll().stream()
+                .filter(r -> cuisine == null || (r.getCuisine() != null && r.getCuisine().equalsIgnoreCase(cuisine)))
+                .filter(r -> diet == null || (r.getDietTags() != null && r.getDietTags().contains(diet.toLowerCase())))
+                .toList();
 
-                    List<MatchResult> scored = new ArrayList<>();
+        List<MatchResult> scored = new ArrayList<>();
 
-                    for (Recipe r : all) {
-                        long matched = r.getIngredients().stream()
-                                .map(this::normalize)
-                                .filter(normalized::contains)
-                                .count();
+        for (Recipe r : all) {
+            long matched = r.getIngredients().stream()
+                    .map(this::normalize)
+                    .filter(normalized::contains)
+                    .count();
 
-                        double ingredientScore = (double) matched / r.getIngredients().size();
-                        double ratingScore = r.getRating() / 5.0;
-                        double finalScore = ingredientScore * 0.7 + ratingScore * 0.3;
+            double ingredientScore = (double) matched / r.getIngredients().size();
+            double ratingScore = r.getRating() / 5.0;
+            double finalScore = ingredientScore * 0.7 + ratingScore * 0.3;
 
-            //            if (finalScore > 0.2) {
-            //                scored.add(new MatchResult(r, finalScore));
-            //            }
-                        if (ingredientScore >= 0.2) {
-                            scored.add(new MatchResult(r, finalScore));
-                        }
-
-                    }
-
-                    return scored.stream()
-                            .sorted(Comparator.comparingDouble(MatchResult::getScore).reversed())
-                            .limit(limit)
-                            .toList();
-                }
-
-                // -------------------------------------------------------------
-                // ADVANCED FILTER
-                // -------------------------------------------------------------
-                public List<Recipe> advancedFilterRecipes(String diet, String difficulty, Integer maxTime,
-                                                          String cuisine, Double minRating, String tag, int top) {
-
-                    return repo.findAll().stream()
-                            .filter(r -> diet == null || r.getDietTags().contains(diet.toLowerCase()))
-                            .filter(r -> difficulty == null || r.getDifficulty().equalsIgnoreCase(difficulty))
-                            .filter(r -> maxTime == null || r.getTimeMinutes() <= maxTime)
-                            .filter(r -> cuisine == null || r.getCuisine().equalsIgnoreCase(cuisine))
-                            .filter(r -> minRating == null || r.getRating() >= minRating)
-                            .filter(r -> tag == null || r.getTags().contains(tag.toLowerCase()))
-                            .sorted(Comparator.comparingDouble(Recipe::getRating).reversed())
-                            .limit(top)
-                            .toList();
-                }
-
-                public List<Recipe> getAllRecipes() {
-                    return repo.findAll();
-                }
+            if (ingredientScore >= 0.2) {
+                scored.add(new MatchResult(r, finalScore));
             }
+        }
+
+        return scored.stream()
+                .sorted(Comparator.comparingDouble(MatchResult::getScore).reversed())
+                .limit(limit)
+                .toList();
+    }
+
+    // -------------------------------------------------------------
+    // ADVANCED FILTER
+    // -------------------------------------------------------------
+    public List<Recipe> advancedFilterRecipes(String diet, String difficulty, Integer maxTime,
+                                              String cuisine, Double minRating, String tag, int top) {
+
+        return repo.findAll().stream()
+                .filter(r -> diet == null || r.getDietTags().contains(diet.toLowerCase()))
+                .filter(r -> difficulty == null || r.getDifficulty().equalsIgnoreCase(difficulty))
+                .filter(r -> maxTime == null || r.getTimeMinutes() <= maxTime)
+                .filter(r -> cuisine == null || r.getCuisine().equalsIgnoreCase(cuisine))
+                .filter(r -> minRating == null || r.getRating() >= minRating)
+                .filter(r -> tag == null || r.getTags().contains(tag.toLowerCase()))
+                .sorted(Comparator.comparingDouble(Recipe::getRating).reversed())
+                .limit(top)
+                .toList();
+    }
+
+    public List<Recipe> getAllRecipes() {
+        return repo.findAll();
+    }
+}
