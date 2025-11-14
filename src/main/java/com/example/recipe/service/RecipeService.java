@@ -61,7 +61,7 @@ public class RecipeService {
 You MUST output ONLY valid JSON. No text before/after JSON.
 
 IMAGE:
-Return BASE64 JPEG inside "imageBase64". No URLs.
+Return BASE64 JPEG inside "imageBase64". Never return URLs.
 
 FORMAT:
 {
@@ -87,8 +87,20 @@ FORMAT:
   "score": number
 }
 
+RULES:
+1. Only generate a recipe if the provided ingredients are REAL, SAFE, and EDIBLE.
+2. If ANY ingredient is unsafe, fictional, nonsense, or clearly non-food:
+   Return EXACTLY:
+   { "recipe": null, "score": 0 }
+3. If unsure about edibility → treat as non-edible and return { "recipe": null, "score": 0 }.
+4. Do NOT hallucinate weird or dangerous ingredients.
+5. All numeric fields must be numbers (not strings).
+6. imageBase64 must be a valid BASE64 JPEG or an empty string.
+7. Output NOTHING except the final JSON object.
+
 INGREDIENTS: %s
 """.formatted(ingredients);
+
 
             var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
             String json = response.text();
