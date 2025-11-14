@@ -62,10 +62,17 @@ public class RecipeController {
     // ---------------------------------------------------------
     @PostMapping("/ai-recipe")
     public ResponseEntity<?> aiRecipe(@RequestBody Map<String, Object> req) {
+
         List<String> ing = (List<String>) req.get("ingredients");
+
         String raw = service.generateStructuredRecipeFromGemini(ing);
-        return ResponseEntity.ok(safeParse(raw));
+
+        Map<String, Object> parsed = safeParse(raw);
+        parsed.put("ai", true);   // <---- IMPORTANT!!!!
+
+        return ResponseEntity.ok(parsed);
     }
+
 
     // ---------------------------------------------------------
     // FIND → Option 2 logic (ingredient-based search + AI fallback)
