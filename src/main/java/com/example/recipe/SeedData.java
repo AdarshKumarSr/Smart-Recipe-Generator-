@@ -12,7 +12,7 @@ public class SeedData {
                 List.of("tomato","egg","onion","garlic","oil","salt"),
                 25,"easy",List.of("non-vegetarian"),280,14,
                 "Boil eggs, sauté onion & garlic in oil, add tomatoes and spices, mix eggs in curry and simmer 10 min.",
-                "https://www.indianhealthyrecipes.com/wp-content/uploads/2022/05/egg-curry-recipe.jpg",
+                "",
                 "https://www.youtube.com/watch?v=Zg3CIC3-724",
                 "Indian",4.6,124,
                 List.of("spicy","home-style","protein-rich"),
