@@ -2,17 +2,15 @@ package com.example.recipe.controller;
 
 import com.example.recipe.model.User;
 import com.example.recipe.repository.UserRepository;
-//import com.example.recipe.security.JwtService;
 import com.example.recipe.service.JwtService;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.Collections;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+
 import java.util.Map;
 
 @RestController
@@ -20,7 +18,13 @@ import java.util.Map;
 public class AuthController {
 
     @Value("${google.client.id}")
-    private String googleClientId;
+    private String clientId;
+
+    @Value("${google.client.secret}")
+    private String clientSecret;
+
+    @Value("${google.redirect.uri}")
+    private String redirectUri;
 
     private final UserRepository userRepo;
     private final JwtService jwtService;
@@ -30,40 +34,52 @@ public class AuthController {
         this.jwtService = jwtService;
     }
 
-    @PostMapping(value = "/google", consumes = "application/json")
-    public ResponseEntity<?> googleLogin(@RequestBody Map<String, Object> body) throws Exception {
+    // STEP 1: Frontend sends the AUTH CODE here
+    @PostMapping("/google/callback")
+    public ResponseEntity<?> googleCallback(@RequestBody Map<String, String> body) throws Exception {
 
-//        System.out.println("🟢 Incoming body = " + body);
-
-        String idTokenString = (String) body.get("token");
-//        System.out.println("🟢 Extracted token = " + idTokenString);
-
-        if (idTokenString == null || idTokenString.isBlank()) {
-            return ResponseEntity.status(400).body(Map.of("error", "Token missing from request"));
+        String code = body.get("code");
+        if (code == null) {
+            return ResponseEntity.status(400).body(Map.of("error", "Missing authorization code"));
         }
 
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                new NetHttpTransport(),
-                GsonFactory.getDefaultInstance()
-        ).setAudience(Collections.singletonList(googleClientId)).build();
+        // STEP 2: Exchange AUTH CODE for TOKENS
+        RestTemplate rest = new RestTemplate();
+        String tokenUrl = "https://oauth2.googleapis.com/token";
 
-        GoogleIdToken idToken = verifier.verify(idTokenString);
+        Map<String, String> params = Map.of(
+                "code", code,
+                "client_id", clientId,
+                "client_secret", clientSecret,
+                "redirect_uri", redirectUri,
+                "grant_type", "authorization_code"
+        );
 
-        if (idToken == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid ID Token"));
-        }
+        ResponseEntity<String> tokenResponse = rest.postForEntity(tokenUrl, params, String.class);
 
-        GoogleIdToken.Payload payload = idToken.getPayload();
-        String email = payload.getEmail();
-        String name = (String) payload.get("name");
-        String picture = (String) payload.get("picture");
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode tokenJson = mapper.readTree(tokenResponse.getBody());
 
+        String idToken = tokenJson.get("id_token").asText();
+
+        // STEP 3: Decode user info
+        String userInfoUrl = "https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=" + idToken;
+        JsonNode userInfo = rest.getForObject(userInfoUrl, JsonNode.class);
+
+        String email = userInfo.get("email").asText();
+        String name = userInfo.get("name").asText();
+        String picture = userInfo.get("picture").asText();
+
+        // STEP 4: Save / fetch user
         User user = userRepo.findByEmail(email)
                 .orElseGet(() -> userRepo.save(new User(email, name, picture)));
 
+        // STEP 5: Issue JWT
         String jwt = jwtService.generateToken(user);
 
-        return ResponseEntity.ok(Map.of("token", jwt, "user", user));
+        return ResponseEntity.ok(Map.of(
+                "token", jwt,
+                "user", user
+        ));
     }
-
 }

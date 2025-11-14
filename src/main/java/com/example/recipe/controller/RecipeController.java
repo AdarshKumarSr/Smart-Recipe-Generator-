@@ -78,10 +78,11 @@ public class RecipeController {
     // FIND → Option 2 logic (ingredient-based search + AI fallback)
     // ---------------------------------------------------------
     @PostMapping("/find")
-    public ResponseEntity<?> findRecipes(@RequestBody FindRequest req,
-                                         @RequestParam(required = false) String cuisine,
-                                         @RequestParam(required = false) String diet,
-                                         @RequestParam(defaultValue = "5") int top) {
+    public ResponseEntity<?> findRecipes(
+            @RequestBody FindRequest req,
+            @RequestParam(required = false) String cuisine,
+            @RequestParam(required = false) String diet,
+            @RequestParam(defaultValue = "5") int top) {
 
         List<String> ing = new ArrayList<>();
 
