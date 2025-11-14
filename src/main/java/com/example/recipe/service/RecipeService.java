@@ -15,16 +15,15 @@ public class RecipeService {
 
     private final RecipeRepository repo;
     private final Client geminiClient;
-    private final ObjectMapper mapper = new ObjectMapper();
 
     public RecipeService(RecipeRepository repo, Client geminiClient) {
         this.repo = repo;
         this.geminiClient = geminiClient;
     }
 
-    // -------------------------------------------------------------
-    // 🔥 AI: Determine if ingredients are real edible food
-    // -------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // AI CHECK → Are ingredients real edible food?
+    // --------------------------------------------------------------------
     public boolean isLikelyFood(List<String> ingredients) {
         try {
             if (ingredients == null || ingredients.isEmpty())
@@ -34,7 +33,7 @@ public class RecipeService {
                 You are a strict food validator.
                 Determine if MOST of these items are real, edible food ingredients.
 
-                Return ONLY:
+                Reply ONLY:
                 yes
                 or
                 no
@@ -45,35 +44,26 @@ public class RecipeService {
             var res = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
             String out = res.text().trim().toLowerCase();
 
-            return out.equals("yes") || out.contains("yes");
+            return out.equals("yes");
 
         } catch (Exception e) {
-            // fail-safe: assume food so we don't block legitimate requests when AI check fails
-            return true;
+            return true; // fail-safe → allow DB
         }
     }
 
-
-    // -------------------------------------------------------------
-    // STRICT GEMINI GENERATOR (JSON + BASE64 IMAGE)
-    // -------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // STRICT GEMINI JSON RECIPE GENERATOR
+    // --------------------------------------------------------------------
     public String generateStructuredRecipeFromGemini(List<String> ingredients) {
+
         try {
-            // Build prompt
             String prompt = """
-You are an AI that MUST output ONLY valid JSON and nothing else.
+You MUST output ONLY valid JSON. No text before/after JSON.
 
-STRICT RULES:
-- Output EXACTLY one JSON object.
-- No markdown, no code fences.
-- No text outside JSON.
-- Escape internal quotes properly.
+IMAGE:
+Return BASE64 JPEG inside "imageBase64". No URLs.
 
-IMAGE RULE:
-Generate a REALISTIC dish photo and return it as BASE64 JPEG inside imageBase64.
-Do NOT return URLs.
-
-OUTPUT FORMAT:
+FORMAT:
 {
   "recipe": {
     "id": "string",
@@ -101,64 +91,50 @@ INGREDIENTS: %s
 """.formatted(ingredients);
 
             var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
-            String content = response.text();
+            String json = response.text();
 
-            // Clean code fences if present (safe)
-            content = content.replaceAll("(?i)```json", "");
-            content = content.replaceAll("(?i)```", "");
-            content = content.trim();
+            json = json.replace("```json", "")
+                    .replace("```", "")
+                    .trim();
 
-            // Attempt to extract JSON from first { to last }
-            if (content.contains("{") && content.contains("}")) {
-                content = content.substring(content.indexOf("{"), content.lastIndexOf("}") + 1);
+            if (json.contains("{") && json.contains("}")) {
+                json = json.substring(json.indexOf("{"), json.lastIndexOf("}") + 1);
             }
 
-            // Validate JSON strictly using Jackson
-            mapper.readTree(content); // will throw if invalid
-
-            // valid JSON -> return as-is
-            return content;
+            new ObjectMapper().readTree(json); // validate
+            return json;
 
         } catch (Exception e) {
-            // On any failure, return a safe fallback JSON produced by ObjectMapper
-            try {
-                Map<String, Object> fallback = new HashMap<>();
-                Map<String, Object> recipe = new HashMap<>();
-
-                recipe.put("id", "AI-FALLBACK");
-                recipe.put("name", "AI Generated Dish");
-                // ingredients: safe list; if original list null -> empty
-                recipe.put("ingredients", ingredients == null ? List.of() : ingredients);
-                recipe.put("timeMinutes", 20);
-                recipe.put("difficulty", "easy");
-                recipe.put("dietTags", List.of());
-                recipe.put("calories", 300);
-                recipe.put("protein", 10);
-                recipe.put("instructions", "No instructions available.");
-                recipe.put("imageBase64", "");
-                recipe.put("youtubeLink", "");
-                recipe.put("cuisine", "Fusion");
-                recipe.put("rating", 4.0);
-                recipe.put("reviewsCount", 20);
-                recipe.put("tags", List.of());
-                recipe.put("prepTime", "10 minutes");
-                recipe.put("servingSize", "2 servings");
-
-                fallback.put("recipe", recipe);
-                fallback.put("score", 0.5);
-
-                return mapper.writeValueAsString(fallback);
-
-            } catch (Exception ex) {
-                // Last resort: minimal JSON string
-                return "{\"recipe\":{\"id\":\"AI-FALLBACK\",\"name\":\"AI Generated Dish\"},\"score\":0.5}";
+            return """
+            {
+              "recipe": {
+                "id": "AI-FALLBACK",
+                "name": "AI Generated Dish",
+                "ingredients": ["%s"],
+                "timeMinutes": 20,
+                "difficulty": "easy",
+                "dietTags": [],
+                "calories": 300,
+                "protein": 10,
+                "instructions": "No instructions available.",
+                "imageBase64": "",
+                "youtubeLink": "",
+                "cuisine": "Fusion",
+                "rating": 4.0,
+                "reviewsCount": 20,
+                "tags": [],
+                "prepTime": "10 minutes",
+                "servingSize": "2 servings"
+              },
+              "score": 0.5
             }
+            """.formatted(String.join(",", ingredients));
         }
     }
 
-    // -------------------------------------------------------------
-    // NORMALIZE INGREDIENT
-    // -------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // NORMALIZE
+    // --------------------------------------------------------------------
     private String normalize(String s) {
         if (s == null) return null;
         s = s.toLowerCase().trim();
@@ -167,9 +143,6 @@ INGREDIENTS: %s
         return s;
     }
 
-    // -------------------------------------------------------------
-    // PARSE TEXT INGREDIENTS
-    // -------------------------------------------------------------
     public List<String> parseTextIngredients(String text) {
         if (text == null || text.isBlank()) return Collections.emptyList();
         return Arrays.stream(text.split(","))
@@ -180,54 +153,34 @@ INGREDIENTS: %s
                 .toList();
     }
 
-    // -------------------------------------------------------------
-    // DB MATCHER WITH ≥ 0.5 THRESHOLD (STRICT)
-    // -------------------------------------------------------------
-    public List<MatchResult> findBestMatchesWithFilters(
-            List<String> ingredients,
-            String cuisine,
-            String diet,
-            int limit
-    ) {
+    // --------------------------------------------------------------------
+    // DB SEARCH — no strict threshold (OPTION 2)
+    // --------------------------------------------------------------------
+    public List<MatchResult> findMatches(List<String> ingredients, String cuisine, String diet, int limit) {
 
-        Set<String> normalized = (ingredients == null)
-                ? Collections.emptySet()
-                : ingredients.stream().map(this::normalize).collect(Collectors.toSet());
+        Set<String> set = ingredients.stream().map(this::normalize).collect(Collectors.toSet());
 
-        boolean edible = isLikelyFood(ingredients);
+        return repo.findAll().stream()
+                .filter(r -> cuisine == null || r.getCuisine().equalsIgnoreCase(cuisine))
+                .filter(r -> diet == null || r.getDietTags().contains(diet.toLowerCase()))
+                .map(r -> {
+                    long match = r.getIngredients().stream()
+                            .map(this::normalize)
+                            .filter(set::contains)
+                            .count();
 
-        List<Recipe> all = repo.findAll().stream()
-                .filter(r -> cuisine == null || (r.getCuisine() != null && r.getCuisine().equalsIgnoreCase(cuisine)))
-                .filter(r -> diet == null || (r.getDietTags() != null && r.getDietTags().contains(diet.toLowerCase())))
-                .toList();
+                    double ingredientScore = (double) match / r.getIngredients().size();
+                    double ratingScore = r.getRating() / 5.0;
 
-        List<MatchResult> scored = new ArrayList<>();
+                    double finalScore = (ingredientScore * 0.7) + (ratingScore * 0.3);
 
-        for (Recipe r : all) {
-            long matched = r.getIngredients().stream()
-                    .map(this::normalize)
-                    .filter(normalized::contains)
-                    .count();
-
-            double ingredientScore = (double) matched / Math.max(1, r.getIngredients().size());
-            double ratingScore = r.getRating() / 5.0;
-            double finalScore = ingredientScore * 0.7 + ratingScore * 0.3;
-
-            // Strict: only accept DB results when input is likely-food AND ingredient coverage >= 0.5
-            if (edible && ingredientScore >= 0.5) {
-                scored.add(new MatchResult(r, finalScore));
-            }
-        }
-
-        return scored.stream()
+                    return new MatchResult(r, finalScore);
+                })
                 .sorted(Comparator.comparingDouble(MatchResult::getScore).reversed())
                 .limit(limit)
                 .toList();
     }
 
-    // -------------------------------------------------------------
-    // FILTER SYSTEM
-    // -------------------------------------------------------------
     public List<Recipe> advancedFilterRecipes(String diet, String difficulty, Integer maxTime,
                                               String cuisine, Double minRating, String tag, int top) {
 

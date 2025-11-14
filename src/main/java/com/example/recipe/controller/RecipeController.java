@@ -26,19 +26,13 @@ public class RecipeController {
         return ResponseEntity.ok("recipe service alive ✅");
     }
 
-    // ---------------------------------------------------------
-    // Safe JSON parser
-    // ---------------------------------------------------------
-    private Map<String, Object> safeParseJson(String raw) {
+    private Map<String, Object> safeParse(String raw) {
         try {
             return mapper.readValue(raw, Map.class);
         } catch (Exception e) {
-            System.out.println("⚠ AI JSON parse failed: " + e.getMessage());
-
             Map<String, Object> fallback = new HashMap<>();
-
-            // Build full recipe map safely (avoid Map.of limit)
             Map<String, Object> recipe = new HashMap<>();
+
             recipe.put("id", "AI-FALLBACK");
             recipe.put("name", "AI Generated Dish");
             recipe.put("ingredients", List.of());
@@ -59,67 +53,52 @@ public class RecipeController {
 
             fallback.put("recipe", recipe);
             fallback.put("score", 0.5);
-
             return fallback;
         }
     }
 
-
     // ---------------------------------------------------------
-    // ⁠AI RECIPE ENDPOINT (guarded)
+    // AI direct
     // ---------------------------------------------------------
     @PostMapping("/ai-recipe")
-    public ResponseEntity<?> generateAIRecipe(@RequestBody Map<String, Object> request) {
-        try {
-            List<String> ingredients = (List<String>) request.get("ingredients");
-
-            if (ingredients == null || ingredients.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Ingredients missing"));
-            }
-
-            String raw = service.generateStructuredRecipeFromGemini(ingredients);
-            Map<String, Object> json = safeParseJson(raw);
-
-            return ResponseEntity.ok(json);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Gemini failed", "details", e.getMessage()));
-        }
+    public ResponseEntity<?> aiRecipe(@RequestBody Map<String, Object> req) {
+        List<String> ing = (List<String>) req.get("ingredients");
+        String raw = service.generateStructuredRecipeFromGemini(ing);
+        return ResponseEntity.ok(safeParse(raw));
     }
 
     // ---------------------------------------------------------
-    // /find → DB first → if weak/no match → tell frontend AI needed
+    // FIND → Option 2 logic
     // ---------------------------------------------------------
     @PostMapping("/find")
-    public ResponseEntity<?> findRecipes(
-            @RequestBody FindRequest req,
-            @RequestParam(required = false) String cuisine,
-            @RequestParam(required = false) String diet,
-            @RequestParam(defaultValue = "5") int top
-    ) {
+    public ResponseEntity<?> findRecipes(@RequestBody FindRequest req,
+                                         @RequestParam(required = false) String cuisine,
+                                         @RequestParam(required = false) String diet,
+                                         @RequestParam(defaultValue = "5") int top) {
 
-        List<String> ingredients = new ArrayList<>();
+        List<String> ing = new ArrayList<>();
 
-        if (req.getIngredients() != null && !req.getIngredients().isEmpty()) {
-            ingredients.addAll(req.getIngredients());
+        if (req.getIngredients() != null && !req.getIngredients().isEmpty())
+            ing.addAll(req.getIngredients());
+        else if (req.getIngredientsText() != null)
+            ing.addAll(service.parseTextIngredients(req.getIngredientsText()));
+
+        // 1️⃣ Check if ingredients are FOOD
+        boolean edible = service.isLikelyFood(ing);
+
+        if (!edible) {
+            // → PROPER behavior: skip DB, show AI button
+            return ResponseEntity.ok(Map.of("aiSuggested", true));
         }
 
-        if ((req.getIngredients() == null || req.getIngredients().isEmpty())
-                && req.getIngredientsText() != null) {
-            ingredients.addAll(service.parseTextIngredients(req.getIngredientsText()));
-        }
-
-        // 1️⃣ Try DB with strict ≥ 0.5 threshold
-        List<MatchResult> results =
-                service.findBestMatchesWithFilters(ingredients, cuisine, diet, top);
+        // 2️⃣ Normal DB search
+        List<MatchResult> results = service.findMatches(ing, cuisine, diet, top);
 
         if (!results.isEmpty()) {
             return ResponseEntity.ok(results);
         }
 
-        // 2️⃣ No match → Tell frontend to show AI button
+        // 3️⃣ DB empty → frontend shows AI button
         return ResponseEntity.ok(Map.of("aiSuggested", true));
     }
 
@@ -131,8 +110,8 @@ public class RecipeController {
             @RequestParam(required = false) String cuisine,
             @RequestParam(required = false) Double minRating,
             @RequestParam(required = false) String tag,
-            @RequestParam(defaultValue = "5") int top
-    ) {
+            @RequestParam(defaultValue = "5") int top) {
+
         return ResponseEntity.ok(
                 service.advancedFilterRecipes(diet, difficulty, maxTime, cuisine, minRating, tag, top)
         );
