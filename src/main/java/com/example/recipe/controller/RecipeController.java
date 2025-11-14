@@ -68,7 +68,7 @@ public class RecipeController {
     }
 
     // ---------------------------------------------------------
-    // FIND → Option 2 logic
+    // FIND → Option 2 logic (ingredient-based search + AI fallback)
     // ---------------------------------------------------------
     @PostMapping("/find")
     public ResponseEntity<?> findRecipes(@RequestBody FindRequest req,
@@ -80,7 +80,7 @@ public class RecipeController {
 
         if (req.getIngredients() != null && !req.getIngredients().isEmpty())
             ing.addAll(req.getIngredients());
-        else if (req.getIngredientsText() != null)
+        else if (req.getIngredientsText() != null && !req.getIngredientsText().isBlank())
             ing.addAll(service.parseTextIngredients(req.getIngredientsText()));
 
         // 1️⃣ Check if ingredients are FOOD
@@ -91,7 +91,7 @@ public class RecipeController {
             return ResponseEntity.ok(Map.of("aiSuggested", true));
         }
 
-        // 2️⃣ Normal DB search
+        // 2️⃣ Normal DB search (keeps previous logic)
         List<MatchResult> results = service.findMatches(ing, cuisine, diet, top);
 
         if (!results.isEmpty()) {
@@ -105,7 +105,7 @@ public class RecipeController {
     /**
      * ADVANCED FILTER
      *
-     * This endpoint now supports an optional 'ingredients' query param.
+     * This endpoint supports an optional 'ingredients' query param.
      * If 'ingredients' is present the search will first narrow to recipes that
      * contain at least one of those ingredients and then apply the remaining filters.
      *

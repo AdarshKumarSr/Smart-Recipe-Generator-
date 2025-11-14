@@ -162,14 +162,14 @@ INGREDIENTS: %s
 
         return repo.findAll().stream()
                 .filter(r -> cuisine == null || r.getCuisine().equalsIgnoreCase(cuisine))
-                .filter(r -> diet == null || r.getDietTags().contains(diet.toLowerCase()))
+                .filter(r -> diet == null || r.getDietTags().stream().anyMatch(d -> d.equalsIgnoreCase(diet)))
                 .map(r -> {
                     long match = r.getIngredients().stream()
                             .map(this::normalize)
                             .filter(set::contains)
                             .count();
 
-                    double ingredientScore = (double) match / r.getIngredients().size();
+                    double ingredientScore = r.getIngredients().isEmpty() ? 0.0 : (double) match / r.getIngredients().size();
                     double ratingScore = r.getRating() / 5.0;
 
                     double finalScore = (ingredientScore * 0.7) + (ratingScore * 0.3);
