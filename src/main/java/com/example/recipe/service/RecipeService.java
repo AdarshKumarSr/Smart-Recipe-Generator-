@@ -26,81 +26,113 @@ public class RecipeService {
     // -------------------------------------------------------------
     public String generateStructuredRecipeFromGemini(List<String> ingredients) {
         try {
+
+            // 1️⃣ — FOOLPROOF PROMPT
             String prompt = """
-            You are an expert recipe creator AND a JSON generator.
-            Your ONLY output must be STRICT valid JSON.
-            Do NOT add explanations, comments, markdown, or code fences.
+You are an AI that MUST output ONLY valid JSON and nothing else.
+Never output markdown, code blocks, explanations, or comments.
 
-            Generate a complete, realistic recipe based on these ingredients:
-%s
+STRICT RULES:
+- Output EXACTLY one JSON object.
+- No text before or after JSON.
+- Escape all quotes inside strings.
+- No newlines inside strings unless escaped (\\n).
+- No trailing commas.
+- EVERY field required and must be high-quality.
 
-            RULES:
-            - Output must follow EXACTLY this structure and keys.
-                    - Fill every field with realistic, high-quality data.
-                    - Make recipe creative but believable.
-            - Instructions must be multi-step and detailed.
-            - Cuisine should match the dish style.
-                    - rating must be 1–5, reviewsCount realistic (20–300).
-                    - dietTags and tags must be relevant.
-                    - Do not hallucinate ingredients not related to the recipe.
+IMAGE RULE:
+Generate a realistic dish image and return it as BASE64 JPEG inside imageBase64.
+Do NOT return a URL.
 
-            Add a highly realistic dish image using Gemini’s image generation.
-                    Provide the **base64 JPEG** inside imageBase64 (NOT a URL).
+OUTPUT FORMAT:
+{
+  "recipe": {
+    "id": "string",
+    "name": "string",
+    "ingredients": ["string"],
+    "timeMinutes": number,
+    "difficulty": "easy" | "medium" | "hard",
+    "dietTags": ["string"],
+    "calories": number,
+    "protein": number,
+    "instructions": "string",
+    "imageBase64": "string",
+    "youtubeLink": "string",
+    "cuisine": "string",
+    "rating": number,
+    "reviewsCount": number,
+    "tags": ["string"],
+    "prepTime": "string",
+    "servingSize": "string"
+  },
+  "score": number
+}
 
-                    OUTPUT STRUCTURE:
-            {
-                "recipe": {
-                "id": "string",
-                        "name": "string",
-                        "ingredients": ["string"],
-                "timeMinutes": number,
-                        "difficulty": "easy" | "medium" | "hard",
-                        "dietTags": ["string"],
-                "calories": number,
-                        "protein": number,
-                        "instructions": "string",
-                        "imageBase64": "string",
-                        "youtubeLink": "string",
-                        "cuisine": "string",
-                        "rating": number,
-                        "reviewsCount": number,
-                        "tags": ["string"],
-                "prepTime": "string",
-                        "servingSize": "string"
-            },
-                "score": number
+INGREDIENTS: %s
+""".formatted(ingredients);
+
+
+            // 2️⃣ — CALL GEMINI
+            var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
+
+            String content = response.text();
+
+            // 3️⃣ — REMOVE CODEBLOCKS + TRASH
+            content = content.replaceAll("(?i)```json", "");
+            content = content.replaceAll("(?i)```", "");
+            content = content.trim();
+
+            // 4️⃣ — EXTRACT ONLY VALID JSON BETWEEN FIRST { and LAST }
+            if (content.contains("{") && content.contains("}")) {
+                content = content.substring(content.indexOf("{"), content.lastIndexOf("}") + 1);
             }
 
-            IMAGE GENERATION PROMPT:
-            Create a professional-quality food photograph of the final recipe dish.
-            Requirements:
-            - Ultra-realistic 4K photo
-            - Natural lighting
-                    - Soft shadows
-                    - Shallow depth of field (f/2.0)
-                    - 50mm lens, DSLR style
-                    - Restaurant-style plating
-                    - Vibrant colors, crisp textures
-                    - Background minimal and clean
+            // 5️⃣ — Replace any broken quotes
+            content = content.replaceAll("\\\\\"", "\"");
+            content = content.replaceAll("\"\\s*:\\s*\"", "\": \"");
 
-            """.formatted(ingredients);
+            // 6️⃣ — Validate JSON before returning
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                mapper.readTree(content);
+                return content;  // VALID JSON
+            } catch (Exception jsonError) {
+                System.out.println("⚠ Gemini returned invalid JSON, fallback applied: " + jsonError.getMessage());
+            }
+
+            // 7️⃣ — Last resort fallback
+            return """
+        {
+          "recipe": {
+            "id": "AI-FALLBACK",
+            "name": "AI Generated Dish",
+            "ingredients": ["%s"],
+            "timeMinutes": 20,
+            "difficulty": "easy",
+            "dietTags": [],
+            "calories": 300,
+            "protein": 10,
+            "instructions": "No instructions available.",
+            "imageBase64": "",
+            "youtubeLink": "",
+            "cuisine": "Fusion",
+            "rating": 4.0,
+            "reviewsCount": 20,
+            "tags": [],
+            "prepTime": "10 minutes",
+            "servingSize": "2 servings"
+          },
+          "score": 0.5
+        }
+        """.formatted(String.join(",", ingredients));
+
+        } catch (Exception e) {
+            return "{\"error\":\"" + e.getMessage().replace("\"", "'") + "\"}";
+        }
+    }
 
 
-                        var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
-
-                        String text = response.text()
-                                .replaceAll("(?i)```json", "")
-                                .replaceAll("(?i)```", "")
-                                .trim();
-
-                        return text;
-
-                    } catch (Exception e) {
-                        return "{\"error\":\"" + e.getMessage().replace("\"","'") + "\"}";
-                    }
-                }
-
-                // -------------------------------------------------------------
+    // -------------------------------------------------------------
                 // NORMALIZE INGREDIENT
                 // -------------------------------------------------------------
                 private String normalize(String s) {
