@@ -181,20 +181,46 @@ INGREDIENTS: %s
                 .toList();
     }
 
-    public List<Recipe> advancedFilterRecipes(String diet, String difficulty, Integer maxTime,
-                                              String cuisine, Double minRating, String tag, int top) {
+    public List<Recipe> advancedFilterRecipes(
+            String diet,
+            String difficulty,
+            Integer maxTime,
+            String cuisine,
+            Double minRating,
+            String tag,
+            int top) {
 
         return repo.findAll().stream()
-                .filter(r -> diet == null || r.getDietTags().contains(diet.toLowerCase()))
-                .filter(r -> difficulty == null || r.getDifficulty().equalsIgnoreCase(difficulty))
+
+                // Diet filter (flexible match)
+                .filter(r -> diet == null || diet.isBlank() ||
+                        r.getDietTags().stream()
+                                .anyMatch(d -> d.equalsIgnoreCase(diet)))
+
+                // Difficulty
+                .filter(r -> difficulty == null || difficulty.isBlank() ||
+                        r.getDifficulty().equalsIgnoreCase(difficulty))
+
+                // Max time
                 .filter(r -> maxTime == null || r.getTimeMinutes() <= maxTime)
-                .filter(r -> cuisine == null || r.getCuisine().equalsIgnoreCase(cuisine))
+
+                // Cuisine
+                .filter(r -> cuisine == null || cuisine.isBlank() ||
+                        r.getCuisine().equalsIgnoreCase(cuisine))
+
+                // Rating
                 .filter(r -> minRating == null || r.getRating() >= minRating)
-                .filter(r -> tag == null || r.getTags().contains(tag.toLowerCase()))
+
+                // Tag filter (flexible match)
+                .filter(r -> tag == null || tag.isBlank() ||
+                        r.getTags().stream()
+                                .anyMatch(t -> t.equalsIgnoreCase(tag)))
+
                 .sorted(Comparator.comparingDouble(Recipe::getRating).reversed())
                 .limit(top)
                 .toList();
     }
+
 
     public List<Recipe> getAllRecipes() {
         return repo.findAll();
