@@ -145,7 +145,7 @@ INGREDIENTS: %s
 
     public List<String> parseTextIngredients(String text) {
         if (text == null || text.isBlank()) return Collections.emptyList();
-        return Arrays.stream(text.split(","))
+        return Arrays.stream(text.split("[,\\s]+"))
                 .map(String::trim)
                 .map(this::normalize)
                 .filter(x -> !x.isEmpty())
@@ -181,6 +181,9 @@ INGREDIENTS: %s
                 .toList();
     }
 
+    /**
+     * OLD: filtering without ingredients (kept for backwards compatibility)
+     */
     public List<Recipe> advancedFilterRecipes(
             String diet,
             String difficulty,
@@ -221,6 +224,58 @@ INGREDIENTS: %s
                 .toList();
     }
 
+    /**
+     * NEW: filter WITH ingredients — first restrict to recipes containing the ingredients,
+     * then apply the remaining filters. This is the behaviour you asked for.
+     */
+    public List<Recipe> advancedFilterWithIngredients(
+            List<String> ingredients,
+            String diet,
+            String difficulty,
+            Integer maxTime,
+            String cuisine,
+            Double minRating,
+            String tag,
+            int top) {
+
+        // normalize ingredient set
+        Set<String> ingSet = ingredients == null
+                ? Collections.emptySet()
+                : ingredients.stream().map(this::normalize).collect(Collectors.toSet());
+
+        return repo.findAll().stream()
+
+                // Must contain at least one of the provided ingredients
+                .filter(r -> {
+                    if (ingSet.isEmpty()) return true;
+                    return r.getIngredients().stream()
+                            .map(this::normalize)
+                            .anyMatch(ingSet::contains);
+                })
+
+                // Then apply the same filters as before
+                .filter(r -> diet == null || diet.isBlank() ||
+                        r.getDietTags().stream()
+                                .anyMatch(d -> d.equalsIgnoreCase(diet)))
+
+                .filter(r -> difficulty == null || difficulty.isBlank() ||
+                        r.getDifficulty().equalsIgnoreCase(difficulty))
+
+                .filter(r -> maxTime == null || r.getTimeMinutes() <= maxTime)
+
+                .filter(r -> cuisine == null || cuisine.isBlank() ||
+                        r.getCuisine().equalsIgnoreCase(cuisine))
+
+                .filter(r -> minRating == null || r.getRating() >= minRating)
+
+                .filter(r -> tag == null || tag.isBlank() ||
+                        r.getTags().stream()
+                                .anyMatch(t -> t.equalsIgnoreCase(tag)))
+
+                .sorted(Comparator.comparingDouble(Recipe::getRating).reversed())
+                .limit(top)
+                .toList();
+    }
 
     public List<Recipe> getAllRecipes() {
         return repo.findAll();

@@ -102,8 +102,20 @@ public class RecipeController {
         return ResponseEntity.ok(Map.of("aiSuggested", true));
     }
 
+    /**
+     * ADVANCED FILTER
+     *
+     * This endpoint now supports an optional 'ingredients' query param.
+     * If 'ingredients' is present the search will first narrow to recipes that
+     * contain at least one of those ingredients and then apply the remaining filters.
+     *
+     * Examples:
+     *  GET /api/recipes/filter?ingredients=egg,tomato&cuisine=Indian&diet=vegetarian
+     *  GET /api/recipes/filter?cuisine=Indian&tag=spicy    --> behaves like previous advancedFilterRecipes
+     */
     @GetMapping("/filter")
     public ResponseEntity<List<Recipe>> filterRecipes(
+            @RequestParam(required = false) String ingredients, // optional comma/space separated
             @RequestParam(required = false) String diet,
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) Integer maxTime,
@@ -112,6 +124,15 @@ public class RecipeController {
             @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "5") int top) {
 
+        if (ingredients != null && !ingredients.isBlank()) {
+            // parse text into list using service helper (normalizes, splits)
+            List<String> ingList = service.parseTextIngredients(ingredients);
+            return ResponseEntity.ok(
+                    service.advancedFilterWithIngredients(ingList, diet, difficulty, maxTime, cuisine, minRating, tag, top)
+            );
+        }
+
+        // fallback: old behavior (filter without ingredients)
         return ResponseEntity.ok(
                 service.advancedFilterRecipes(diet, difficulty, maxTime, cuisine, minRating, tag, top)
         );
