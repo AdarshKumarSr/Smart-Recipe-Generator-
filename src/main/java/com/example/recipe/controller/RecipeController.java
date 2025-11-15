@@ -91,22 +91,22 @@ public class RecipeController {
         else if (req.getIngredientsText() != null && !req.getIngredientsText().isBlank())
             ing.addAll(service.parseTextIngredients(req.getIngredientsText()));
 
-        // 1️⃣ Check if ingredients are FOOD
+        // 1️⃣ Check if ingredients are FOOD (via Gemini)
         boolean edible = service.isLikelyFood(ing);
 
         if (!edible) {
-            // → PROPER behavior: skip DB, show AI button
+            // Ingredients are not edible: suggest AI
             return ResponseEntity.ok(Map.of("aiSuggested", true));
         }
 
-        // 2️⃣ Normal DB search (keeps previous logic)
+        // 2️⃣ Normal DB search if ingredients are edible
         List<MatchResult> results = service.findMatches(ing, cuisine, diet, top);
 
         if (!results.isEmpty()) {
-            return ResponseEntity.ok(results);
+            return ResponseEntity.ok(results); // Found recipes
         }
 
-        // 3️⃣ DB empty → frontend shows AI button
+        // 3️⃣ No recipes in DB, fallback to AI suggestion
         return ResponseEntity.ok(Map.of("aiSuggested", true));
     }
 
