@@ -62,62 +62,84 @@ public class RecipeService {
     public String generateStructuredRecipeFromGemini(List<String> ingredients) {
         try {
             String prompt = """
-    You MUST return ONLY valid JSON. Never use markdown or backticks.
-    Always generate a complete recipe even if ingredients look unusual.
+            You are a professional chef AI.  
+            Your task is to generate a clean, structured JSON recipe.
 
-    DO NOT return null under any circumstances.
+            RULES:
+            - Return ONLY valid JSON.
+            - NO markdown, NO backticks.
+            - NEVER return null recipe.
+            - If ingredients are unusual, still generate a simple safe recipe.
+            - imageBase64 must be base64 string or empty string.
+            - youtubeLink may be empty.
+            - All fields MUST exist.
 
-    "imageBase64" may be valid base64 OR empty string.
-    No URLs allowed.
+            JSON FORMAT:
+            {
+              "recipe": {
+                "id": "string",
+                "name": "string",
+                "ingredients": ["string"],
+                "timeMinutes": number,
+                "difficulty": "easy" | "medium" | "hard",
+                "dietTags": ["string"],
+                "calories": number,
+                "protein": number,
+                "instructions": "string",
+                "imageBase64": "string",
+                "youtubeLink": "string",
+                "cuisine": "string",
+                "rating": number,
+                "reviewsCount": number,
+                "tags": ["string"],
+                "prepTime": "string",
+                "servingSize": "string"
+              },
+              "score": number
+            }
 
-    JSON FORMAT:
-    {
-      "recipe": {
-        "id": "string",
-        "name": "string",
-        "ingredients": ["string"],
-        "timeMinutes": number,
-        "difficulty": "easy" | "medium" | "hard",
-        "dietTags": ["string"],
-        "calories": number,
-        "protein": number,
-        "instructions": "string",
-        "imageBase64": "string",
-        "youtubeLink": "string",
-        "cuisine": "string",
-        "rating": number,
-        "reviewsCount": number,
-        "tags": ["string"],
-        "prepTime": "string",
-        "servingSize": "string"
-      },
-      "score": number
-    }
+            INGREDIENTS: %s
+        """.formatted(ingredients);
 
-    INGREDIENTS: %s
-""".formatted(ingredients);
+            // More stable and generous free-tier model
+            var response = geminiClient.models.generateContent(
+                    "gemini-2.0-flash-lite",
+                    prompt,
+                    null
+            );
 
+            String raw = response.text();
 
-            var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
-            String json = response.text().trim();
+            // Cleanup
+            String cleaned = cleanJson(raw);
 
-            json = cleanJson(json);
-            mapper.readTree(json);
-
-            return json;
+            // Validate JSON
+            mapper.readTree(cleaned);
+            return cleaned;
 
         } catch (Exception e) {
+            System.out.println("⚠ AI failed, sending fallback recipe.");
             return fallbackRecipeJson(ingredients);
         }
     }
 
     private String cleanJson(String raw) {
-        raw = raw.replace("```json", "").replace("```", "").trim();
-        if (raw.contains("{") && raw.contains("}")) {
-            return raw.substring(raw.indexOf("{"), raw.lastIndexOf("}") + 1);
+        if (raw == null) return "{}";
+
+        raw = raw.replace("```json", "")
+                .replace("```", "")
+                .trim();
+
+        int start = raw.indexOf("{");
+        int end = raw.lastIndexOf("}");
+
+        if (start != -1 && end != -1 && end > start) {
+            return raw.substring(start, end + 1);
         }
+
         return raw;
     }
+
 
     private String fallbackRecipeJson(List<String> ingredients) {
         return """
