@@ -58,47 +58,46 @@ public class RecipeService {
 
         try {
             String prompt = """
-You MUST output ONLY valid JSON. Do not include any text outside of the JSON structure.
+You MUST output ONLY valid JSON. No text before or after the JSON.
 
-IMAGE:
-- Return the BASE64 encoded JPEG image inside the key "imageBase64". Never return URLs or other formats.
+IMPORTANT RULES:
+- If you cannot follow the format exactly, return:
+  { "recipe": null, "score": 0 }
+- If ANY ingredient is unsafe, fictional, or non-edible:
+  return { "recipe": null, "score": 0 }
 
-FORMAT:
+IMAGE RULE:
+- "imageBase64" may be a valid base64 JPEG OR an empty string.
+- Never return URLs.
+- Never include markdown code blocks.
+
+JSON FORMAT:
 {
   "recipe": {
-    "id": "string",                      // Unique identifier for the recipe
-    "name": "string",                    // Name of the recipe
-    "ingredients": ["string"],           // List of ingredients (strings)
-    "timeMinutes": number,               // Total cooking time in minutes (integer)
-    "difficulty": "easy" | "medium" | "hard",  // Difficulty level
-    "dietTags": ["string"],              // Dietary tags (e.g. "vegetarian", "gluten-free")
-    "calories": number,                  // Total calories per serving (integer)
-    "protein": number,                   // Protein content per serving (integer)
-    "instructions": "string",            // Step-by-step instructions (string)
-    "imageBase64": "string",             // Base64 encoded JPEG image or empty string
-    "youtubeLink": "string",             // Optional YouTube link for the recipe (string)
-    "cuisine": "string",                 // Cuisine type (e.g. "Italian", "Mexican")
-    "rating": number,                    // Rating (integer 1-5)
-    "reviewsCount": number,              // Number of reviews (integer)
-    "tags": ["string"],                  // Tags related to the recipe (e.g. "spicy", "quick")
-    "prepTime": "string",                // Preparation time (string)
-    "servingSize": "string"              // Serving size (e.g. "2 people")
+    "id": "string",
+    "name": "string",
+    "ingredients": ["string"],
+    "timeMinutes": number,
+    "difficulty": "easy" | "medium" | "hard",
+    "dietTags": ["string"],
+    "calories": number,
+    "protein": number,
+    "instructions": "string",
+    "imageBase64": "string",
+    "youtubeLink": "string",
+    "cuisine": "string",
+    "rating": number,
+    "reviewsCount": number,
+    "tags": ["string"],
+    "prepTime": "string",
+    "servingSize": "string"
   },
-  "score": number                        // Recipe score (integer, 0-100)
+  "score": number
 }
-
-RULES:
-1. Only generate a recipe if all provided ingredients are REAL, SAFE, and EDIBLE.
-2. If any ingredient is unsafe, fictional, non-food, or otherwise questionable:
-   Return exactly: { "recipe": null, "score": 0 }
-3. If there is any doubt about the edibility of an ingredient, assume it is non-edible and return { "recipe": null, "score": 0 }.
-4. Do not hallucinate ingredients or include anything that could be harmful or dangerous.
-5. All numeric fields (e.g., time, calories, protein, rating, reviews count) must be valid numbers, not strings.
-6. The "imageBase64" key must contain a valid BASE64-encoded JPEG image string or an empty string if no image is available.
-7. Only output the final JSON object with no additional text or comments.
 
 INGREDIENTS: %s
 """.formatted(ingredients);
+
 
 
             var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
