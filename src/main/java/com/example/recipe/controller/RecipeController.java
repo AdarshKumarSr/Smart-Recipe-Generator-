@@ -26,10 +26,14 @@ public class RecipeController {
         return ResponseEntity.ok("recipe service alive ✅");
     }
 
+    // ============================================================
+    // SAFE JSON PARSER (AI fallback)
+    // ============================================================
     private Map<String, Object> safeParse(String raw) {
         try {
             return mapper.readValue(raw, Map.class);
         } catch (Exception e) {
+
             Map<String, Object> fallback = new HashMap<>();
             Map<String, Object> recipe = new HashMap<>();
 
@@ -57,26 +61,24 @@ public class RecipeController {
         }
     }
 
-    // ---------------------------------------------------------
-    // AI direct
-    // ---------------------------------------------------------
+    // ============================================================
+    // DIRECT AI RECIPE
+    // ============================================================
     @PostMapping("/ai-recipe")
     public ResponseEntity<?> aiRecipe(@RequestBody Map<String, Object> req) {
 
         List<String> ing = (List<String>) req.get("ingredients");
 
         String raw = service.generateStructuredRecipeFromGemini(ing);
-
         Map<String, Object> parsed = safeParse(raw);
-        parsed.put("ai", true);   // <---- IMPORTANT!!!!
 
+        parsed.put("ai", true);
         return ResponseEntity.ok(parsed);
     }
 
-
-    // ---------------------------------------------------------
-    // FIND → Option 2 logic (ingredient-based search + AI fallback)
-    // ---------------------------------------------------------
+    // ============================================================
+    // UNIFIED FIND LOGIC (DB + AI fallback)
+    // ============================================================
     @PostMapping("/find")
     public ResponseEntity<?> findRecipes(
             @RequestBody FindRequest req,
@@ -84,46 +86,57 @@ public class RecipeController {
             @RequestParam(required = false) String diet,
             @RequestParam(defaultValue = "5") int top) {
 
+        // ------------------------------
+        // EXTRACT CLEAN INGREDIENTS
+        // ------------------------------
         List<String> ing = new ArrayList<>();
 
-        if (req.getIngredients() != null && !req.getIngredients().isEmpty())
+        if (req.getIngredients() != null && !req.getIngredients().isEmpty()) {
             ing.addAll(req.getIngredients());
-        else if (req.getIngredientsText() != null && !req.getIngredientsText().isBlank())
+        } else if (req.getIngredientsText() != null && !req.getIngredientsText().isBlank()) {
             ing.addAll(service.parseTextIngredients(req.getIngredientsText()));
+        }
 
-        // 1️⃣ Check if ingredients are FOOD (via Gemini)
-        boolean edible = service.isLikelyFood(ing);
-
-        if (!edible) {
-            // Ingredients are not edible: suggest AI
+        // If nothing entered → treat as non-edible → AI
+        if (ing.isEmpty()) {
             return ResponseEntity.ok(Map.of("aiSuggested", true));
         }
 
-        // 2️⃣ Normal DB search if ingredients are edible
-        List<MatchResult> results = service.findMatches(ing, cuisine, diet, top);
+        // ------------------------------
+        // CHECK IF INGREDIENTS ARE REAL FOOD
+        // ------------------------------
+        boolean edible = service.isLikelyFood(ing);
 
-        if (!results.isEmpty()) {
-            return ResponseEntity.ok(results); // Found recipes
+        if (!edible) {
+            return ResponseEntity.ok(Map.of("aiSuggested", true));
         }
 
-        // 3️⃣ No recipes in DB, fallback to AI suggestion
-        return ResponseEntity.ok(Map.of("aiSuggested", true));
+        // ------------------------------
+        // DB SEARCH
+        // ------------------------------
+        List<MatchResult> results = service.findMatches(ing, cuisine, diet, top);
+
+        // If DB empty → AI
+        if (results.isEmpty()) {
+            return ResponseEntity.ok(Map.of("aiSuggested", true));
+        }
+
+        // If all scores are 0 → meaningless match → AI
+        boolean allZero = results.stream().allMatch(r -> r.getScore() < 0.01);
+        if (allZero) {
+            return ResponseEntity.ok(Map.of("aiSuggested", true));
+        }
+
+        // Valid DB results
+        return ResponseEntity.ok(results);
     }
 
-    /**
-     * ADVANCED FILTER
-     *
-     * This endpoint supports an optional 'ingredients' query param.
-     * If 'ingredients' is present the search will first narrow to recipes that
-     * contain at least one of those ingredients and then apply the remaining filters.
-     *
-     * Examples:
-     *  GET /api/recipes/filter?ingredients=egg,tomato&cuisine=Indian&diet=vegetarian
-     *  GET /api/recipes/filter?cuisine=Indian&tag=spicy    --> behaves like previous advancedFilterRecipes
-     */
+    // ============================================================
+    // ADVANCED FILTER
+    // ============================================================
     @GetMapping("/filter")
     public ResponseEntity<List<Recipe>> filterRecipes(
-            @RequestParam(required = false) String ingredients, // optional comma/space separated
+            @RequestParam(required = false) String ingredients,
             @RequestParam(required = false) String diet,
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) Integer maxTime,
@@ -133,19 +146,20 @@ public class RecipeController {
             @RequestParam(defaultValue = "5") int top) {
 
         if (ingredients != null && !ingredients.isBlank()) {
-            // parse text into list using service helper (normalizes, splits)
             List<String> ingList = service.parseTextIngredients(ingredients);
             return ResponseEntity.ok(
                     service.advancedFilterWithIngredients(ingList, diet, difficulty, maxTime, cuisine, minRating, tag, top)
             );
         }
 
-        // fallback: old behavior (filter without ingredients)
         return ResponseEntity.ok(
                 service.advancedFilterRecipes(diet, difficulty, maxTime, cuisine, minRating, tag, top)
         );
     }
 
+    // ============================================================
+    // GET ALL
+    // ============================================================
     @GetMapping
     public ResponseEntity<List<Recipe>> getAllRecipes() {
         return ResponseEntity.ok(service.getAllRecipes());

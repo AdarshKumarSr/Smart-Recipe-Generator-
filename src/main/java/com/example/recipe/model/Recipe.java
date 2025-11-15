@@ -3,9 +3,11 @@ package com.example.recipe.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.List;
+import java.util.Optional;
 
 @Document(collection = "recipes")
 public class Recipe {
+
     @Id
     private String id;
     private String name;
@@ -16,22 +18,23 @@ public class Recipe {
     private int calories;
     private int protein; // grams
 
-    // 🆕 Newly added fields
+    // Newly added fields
     private String instructions;  // Detailed steps
     private String imageUrl;      // Image link of the dish
     private String youtubeLink;   // YouTube tutorial link
 
-    // 🌎 New enrichment fields
+    // New enrichment fields
     private String cuisine;       // e.g. "Indian", "Italian"
-    private double rating;        // average rating
+    private double rating;        // average rating (should be between 1.0 and 5.0)
     private int reviewsCount;     // number of reviews
     private List<String> tags;    // e.g. ["spicy", "quick", "family-friendly"]
     private String prepTime;      // e.g. "15 min prep, 20 min cook"
     private String servingSize;   // e.g. "2 servings"
 
+    // Default constructor
     public Recipe() {}
 
-    // 🧩 Updated constructor including all fields
+    // Updated constructor including all fields
     public Recipe(String id, String name, List<String> ingredients, int timeMinutes, String difficulty,
                   List<String> dietTags, int calories, int protein,
                   String instructions, String imageUrl, String youtubeLink,
@@ -56,7 +59,7 @@ public class Recipe {
         this.servingSize = servingSize;
     }
 
-    // 🧠 Getters & Setters
+    // Getters & Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
