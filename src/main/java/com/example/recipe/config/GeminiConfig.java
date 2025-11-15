@@ -14,7 +14,7 @@ public class GeminiConfig {
     @Bean
     public Client geminiClient() {
         if (geminiApiKey == null || geminiApiKey.isBlank()) {
-            throw new IllegalStateException("❌ Missing gemini.api.key in application.properties");
+            throw new IllegalStateException("Missing gemini.api.key in application.properties");
         }
 
         // ✅ Create Gemini client directly with API key

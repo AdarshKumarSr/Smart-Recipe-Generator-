@@ -27,7 +27,7 @@ public class RecipeBackendApplication {
 				registry.addMapping("/api/**")
 						.allowedOrigins(
 								"http://localhost:5173",               // local Vite dev server
-								"https://smart-recipe-generator-frontend-zoy3.onrender.com" // deployed frontend (future)
+								"https://smart-recipe-generator-frontend-zoy3.onrender.com" // deployed frontend
 						)
 						.allowedMethods("GET", "POST", "PUT", "DELETE")
 						.allowedHeaders("*");
