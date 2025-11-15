@@ -8,247 +8,565 @@ public class SeedData {
     public static List<Recipe> createSeed() {
         List<Recipe> list = new ArrayList<>();
 
-        list.add(new Recipe(null, "Tomato Egg Curry",
-                List.of("tomato","egg","onion","garlic","oil","salt"),
-                25,"easy",List.of("non-vegetarian"),280,14,
-                "Boil eggs, sauté onion & garlic in oil, add tomatoes and spices, mix eggs in curry and simmer 10 min.",
-                "",
-                "https://www.youtube.com/watch?v=Zg3CIC3-724",
-                "Indian",4.6,124,
-                List.of("spicy","home-style","protein-rich"),
-                "10 min prep, 15 min cook","2 servings"
-        ));
-
-        list.add(new Recipe(null,"Simple Omelette",
-                List.of("egg","salt","pepper","butter","onion"),
-                10,"easy",List.of("non-vegetarian"),190,12,
-                "Whisk eggs with salt & pepper, cook in butter with onions until set.",
-                "https://www.allrecipes.com/thmb/m2T9GxkmoFNe-fqUtjW8WQjZ2aM=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/AR-basic-omelet-ddmfs-3x2-44df86da9d0643d0a285ff2b1e4a3d56.jpg",
-                "https://www.youtube.com/watch?v=KJfLR1crY3o",
-                "French",4.8,210,
-                List.of("quick","breakfast","simple"),
-                "5 min prep, 5 min cook","1 serving"
-        ));
-
-        list.add(new Recipe(null,"Tomato Soup",
-                List.of("tomato","onion","garlic","butter","salt","pepper"),
-                20,"easy",List.of("vegetarian"),150,4,
-                "Cook tomatoes, onion & garlic, blend smooth, simmer with butter & seasoning.",
-                "https://www.cookwithmanali.com/wp-content/uploads/2021/01/Tomato-Soup-500x500.jpg",
-                "https://www.youtube.com/watch?v=ojkZE8mTSgo",
-                "Continental",4.5,300,
-                List.of("comfort","vegan","light"),
-                "10 min prep, 10 min cook","2 servings"
-        ));
-
-        list.add(new Recipe(null,"Vegetable Fried Rice",
-                List.of("rice","carrot","peas","onion","soy sauce","egg"),
-                30,"medium",List.of("vegetarian"),350,8,
-                "Sauté vegetables, add rice & soy sauce, stir-fry 5 min, add scrambled egg.",
-                "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/05/veg-fried-rice.jpg",
-                "https://www.youtube.com/watch?v=I29Dk0wSdaY",
-                "Asian",4.7,500,
-                List.of("quick","street-style","family-favorite"),
-                "10 min prep, 20 min cook","3 servings"
-        ));
-
-        list.add(new Recipe(null,"Egg Bhurji",
-                List.of("egg","onion","tomato","turmeric","salt","oil"),
-                15,"easy",List.of("non-vegetarian"),210,13,
-                "Sauté onion & tomato with turmeric, scramble eggs in mix, cook until soft.",
-                "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/07/egg-bhurji-recipe.jpg",
-                "https://www.youtube.com/watch?v=1dkLwFJiXq4",
-                "Indian",4.9,890,
-                List.of("spicy","street-food","quick"),
-                "5 min prep, 10 min cook","2 servings"
-        ));
-
-        list.add(new Recipe(null,"Pasta with Tomato Sauce",
-                List.of("pasta","tomato","garlic","olive oil","salt"),
-                25,"easy",List.of("vegetarian"),400,10,
-                "Boil pasta, cook garlic & tomato sauce, mix together & serve with cheese.",
-                "https://www.loveandlemons.com/wp-content/uploads/2019/06/tomato-sauce.jpg",
-                "https://www.youtube.com/watch?v=YNUnP-r0OW4",
-                "Italian",4.7,650,
-                List.of("classic","quick-dinner","comfort"),
-                "10 min prep, 15 min cook","2 servings"
-        ));
-
-        list.add(new Recipe(null,"Paneer Butter Masala",
-                List.of("paneer","tomato","cream","butter","spices","onion"),
-                35,"medium",List.of("vegetarian"),420,16,
-                "Cook tomato-onion gravy & blend, add butter, cream & paneer cubes.",
-                "https://www.vegrecipesofindia.com/wp-content/uploads/2021/01/paneer-butter-masala-1.jpg",
-                "https://www.youtube.com/watch?v=ztxeh7WZ7AI",
-                "Indian",4.9,1100,
-                List.of("rich","restaurant-style","north-indian"),
-                "10 min prep, 25 min cook","3 servings"
-        ));
-
-        list.add(new Recipe(null,"Poha",
-                List.of("flattened rice","onion","peanuts","mustard","turmeric"),
-                15,"easy",List.of("vegetarian"),270,6,
-                "Sauté onions & peanuts, add washed poha & spices, mix well & serve with lemon.",
-                "https://www.vegrecipesofindia.com/wp-content/uploads/2021/03/poha-recipe-1.jpg",
-                "https://www.youtube.com/watch?v=IfPZ7P1fA5g",
-                "Indian",4.8,730,
-                List.of("breakfast","mild","healthy"),
-                "5 min prep, 10 min cook","2 servings"
-        ));
-
-        list.add(new Recipe(null,"Masala Maggi",
-                List.of("noodles","onion","tomato","capsicum","spices"),
-                10,"easy",List.of("vegetarian"),320,8,
-                "Boil Maggi, cook veggies & spices, mix together & serve hot.",
-                "https://www.vegrecipesofindia.com/wp-content/uploads/2022/09/maggi-noodles.jpg",
-                "https://www.youtube.com/watch?v=K1vK7xQUemQ",
-                "Indian",4.6,1500,
-                List.of("instant","spicy","snack"),
-                "5 min prep, 5 min cook","1 serving"
-        ));
-
-        list.add(new Recipe(null,"Aloo Paratha",
-                List.of("wheat flour","potato","onion","spices","butter"),
-                25,"medium",List.of("vegetarian"),380,9,
-                "Stuff spiced mashed potato into dough, roll & cook with butter on tawa.",
-                "https://www.vegrecipesofindia.com/wp-content/uploads/2021/04/aloo-paratha-recipe-1.jpg",
-                "https://www.youtube.com/watch?v=2xgY3pO0O3w",
-                "Indian",4.9,1400,
-                List.of("stuffed","breakfast","punjabi"),
-                "10 min prep, 15 min cook","2 servings"
-        ));
-
-        list.add(new Recipe(null, "Chicken Curry",
-                List.of("chicken","onion","tomato","garlic","ginger","spices","oil"),
-                40, "medium", List.of("non-vegetarian"), 480, 35,
-                "Marinate chicken with spices, sauté onion, garlic, and tomato, add chicken, and simmer till cooked.",
-                "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/07/chicken-curry-recipe.jpg",
-                "https://www.youtube.com/watch?v=1t3NAi6Z2io",
-                "Indian", 4.8, 2100,
-                List.of("spicy", "gravy", "family-dinner"),
-                "15 min prep, 25 min cook", "3 servings"
-        ));
-
-        list.add(new Recipe(null, "Veg Biryani",
-                List.of("basmati rice","vegetables","spices","yogurt","onion","saffron"),
-                45, "hard", List.of("vegetarian"), 420, 10,
-                "Layer cooked rice and spiced veggies, steam on low flame until aromatic.",
-                "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/07/vegetable-biryani-recipe.jpg",
-                "https://www.youtube.com/watch?v=5rJx0Z9KdpI",
-                "Indian", 4.9, 1800,
-                List.of("fragrant","spicy","royal"),
-                "15 min prep, 30 min cook", "3 servings"
-        ));
-
-        list.add(new Recipe(null, "Dal Tadka",
-                List.of("lentils","onion","tomato","garlic","spices","ghee"),
-                25, "easy", List.of("vegetarian","gluten-free"), 290, 12,
-                "Boil lentils, temper with onion, tomato, garlic & spices in ghee.",
-                "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/08/dal-tadka.jpg",
-                "https://www.youtube.com/watch?v=RIFiYqR1nCw",
-                "Indian", 4.8, 950,
-                List.of("comfort","protein-rich","dhaba-style"),
-                "10 min prep, 15 min cook", "2 servings"
-        ));
-
-        list.add(new Recipe(null, "Chole Masala",
-                List.of("chickpeas","tomato","onion","garlic","spices"),
-                35, "medium", List.of("vegetarian","gluten-free"), 360, 15,
-                "Soak and boil chickpeas, prepare spicy tomato-onion gravy, mix and simmer.",
-                "https://www.vegrecipesofindia.com/wp-content/uploads/2021/05/chole-recipe-1.jpg",
-                "https://www.youtube.com/watch?v=yws7TjVZ2sQ",
+        // 1. Creamy Butter Chicken
+        list.add(new Recipe(null, "Creamy Butter Chicken",
+                List.of("chicken","tomato puree","cream","butter","garlic","ginger","kasuri methi","garam masala","salt"),
+                40, "medium", List.of("non-vegetarian"), 480, 32,
+                "Marinate chicken, grill lightly, then simmer in a rich tomato-butter-cream gravy with aromatic spices until silky and smooth.",
+                "https://source.unsplash.com/800x600/?butter-chicken,indian-food",
+                "https://www.youtube.com/watch?v=W1pEDnJQ7r4",
                 "Indian", 4.9, 2100,
-                List.of("north-indian","spicy","vegan"),
-                "10 min prep, 25 min cook", "3 servings"
+                List.of("creamy","restaurant-style","rich"),
+                "15 min prep, 25 min cook",
+                "3 servings"
         ));
 
-        list.add(new Recipe(null, "Pancakes",
-                List.of("flour","milk","egg","sugar","butter"),
-                15, "easy", List.of("vegetarian"), 310, 8,
-                "Mix batter, cook on pan till golden, serve with syrup or fruits.",
-                "https://www.allrecipes.com/thmb/XtIrPYovl0bskYywhGnKKhgRt1Y=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/AR-basic-pancakes-ddmfs-3x2-41cf81a944a94b5dbe210ba3770d3db3.jpg",
-                "https://www.youtube.com/watch?v=2u6A9cD3yFQ",
-                "American", 4.8, 540,
-                List.of("breakfast","sweet","fluffy"),
-                "5 min prep, 10 min cook", "2 servings"
+
+// 2. Hakka Noodles
+        list.add(new Recipe(null, "Hakka Noodles",
+                List.of("noodles","soy sauce","vinegar","carrot","capsicum","cabbage","garlic","chili"),
+                22, "easy", List.of("vegetarian"), 380, 9,
+                "Boil noodles al dente, toss with stir-fried veggies on high flame, add sauces and chili oil for a smoky Indo-Chinese flavor.",
+                "https://source.unsplash.com/800x600/?noodles,asian-food",
+                "https://www.youtube.com/watch?v=J3Qv8yA6RVA",
+                "Indo-Chinese", 4.8, 1200,
+                List.of("street-style","spicy","quick"),
+                "10 min prep, 12 min cook",
+                "2 servings"
         ));
 
-        list.add(new Recipe(null, "Grilled Cheese Sandwich",
-                List.of("bread","cheese","butter","pepper"),
-                10, "easy", List.of("vegetarian"), 280, 10,
-                "Butter bread slices, fill cheese, grill until golden brown.",
-                "https://www.seriouseats.com/thmb/Z7tUABuZbCh1d-3AGfUQKqMNjGw=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/20220622-Grilled-Cheese-Amanda-Suarez-hero-76e27ff0d7af4f3c87e18a7c9b6484c8.jpg",
-                "https://www.youtube.com/watch?v=2o4Q4m3w9xE",
-                "American", 4.7, 850,
-                List.of("quick","snack","cheesy"),
-                "3 min prep, 7 min cook", "1 serving"
+
+// 3. Egg Masala Fry
+        list.add(new Recipe(null, "Egg Masala Fry",
+                List.of("egg","onion","tomato","garlic","curry leaves","chili","oil","turmeric"),
+                15, "easy", List.of("non-vegetarian"), 260, 18,
+                "Boiled eggs are pan-fried and then coated in a spicy onion-tomato masala with curry leaves for a quick protein-rich dish.",
+                "https://source.unsplash.com/800x600/?egg-curry,indian",
+                "https://www.youtube.com/watch?v=I-3Q2qkq8M0",
+                "Indian", 4.7, 800,
+                List.of("spicy","quick","protein-rich"),
+                "5 min prep, 10 min cook",
+                "2 servings"
         ));
 
-        list.add(new Recipe(null, "Aloo Gobi",
-                List.of("potato","cauliflower","tomato","onion","spices"),
-                25, "easy", List.of("vegetarian"), 240, 7,
-                "Cook potato and cauliflower with tomato, onion & Indian spices.",
-                "https://www.vegrecipesofindia.com/wp-content/uploads/2021/07/aloo-gobi-recipe-1.jpg",
-                "https://www.youtube.com/watch?v=K3qQ0T2mHws",
-                "Indian", 4.6, 1200,
-                List.of("dry-curry","tiffin","home-style"),
-                "10 min prep, 15 min cook", "2 servings"
+
+// 4. Creamy Pesto Pasta
+        list.add(new Recipe(null, "Creamy Pesto Pasta",
+                List.of("pasta","pesto","cream","parmesan","garlic","olive oil"),
+                20, "easy", List.of("vegetarian"), 450, 12,
+                "Pasta tossed in basil pesto blended with cream and parmesan, creating a silky, luxurious Italian-style sauce.",
+                "https://source.unsplash.com/800x600/?pasta,pesto",
+                "https://www.youtube.com/watch?v=sVrQXXVxvL8",
+                "Italian", 4.7, 650,
+                List.of("creamy","italian","quick"),
+                "5 min prep, 15 min cook",
+                "2 servings"
         ));
 
-        list.add(new Recipe(null, "Veg Burger",
-                List.of("burger bun","potato patty","lettuce","cheese","sauce"),
-                20, "easy", List.of("vegetarian"), 420, 11,
-                "Assemble toasted buns, veggie patty, cheese, lettuce, and sauce.",
-                "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/06/veg-burger.jpg",
-                "https://www.youtube.com/watch?v=l9GEOMeyK7U",
-                "American", 4.5, 1800,
-                List.of("fast-food","cheesy","snack"),
-                "10 min prep, 10 min cook", "2 servings"
+
+// 5. Chicken Biryani
+        list.add(new Recipe(null, "Chicken Biryani",
+                List.of("chicken","basmati rice","yogurt","spices","fried onions","ghee","saffron"),
+                45, "hard", List.of("non-vegetarian"), 520, 28,
+                "Layer marinated chicken with half-cooked rice, saffron milk, and fried onions; seal and cook on dum for rich aroma.",
+                "https://source.unsplash.com/800x600/?biryani,indian-food",
+                "https://www.youtube.com/watch?v=uygb9O4N8jY",
+                "Indian", 4.9, 3400,
+                List.of("royal","aromatic","festival"),
+                "15 min prep, 30 min cook",
+                "3 servings"
         ));
 
-        list.add(new Recipe(null, "Paneer Tikka",
-                List.of("paneer","curd","spices","capsicum","onion"),
-                25, "medium", List.of("vegetarian","gluten-free"), 370, 18,
-                "Marinate paneer cubes in yogurt & spices, grill with veggies.",
-                "https://www.vegrecipesofindia.com/wp-content/uploads/2021/08/paneer-tikka-1.jpg",
-                "https://www.youtube.com/watch?v=wZfKnG2Sg4s",
-                "Indian", 4.9, 1400,
-                List.of("starter","grilled","protein-rich"),
-                "10 min prep, 15 min cook", "2 servings"
+
+// 6. Veg Lasagna
+        list.add(new Recipe(null, "Veg Lasagna",
+                List.of("lasagna sheets","tomato sauce","béchamel","cheese","zucchini","spinach"),
+                40, "medium", List.of("vegetarian"), 430, 14,
+                "Pasta sheets layered with roasted veggies, creamy béchamel, and cheese, baked until golden and bubbly.",
+                "https://source.unsplash.com/800x600/?lasagna,italian",
+                "https://www.youtube.com/watch?v=WcR7S-zfHwg",
+                "Italian", 4.6, 900,
+                List.of("baked","cheesy","comfort"),
+                "10 min prep, 30 min cook",
+                "3 servings"
         ));
 
-        list.add(new Recipe(null, "Egg Fried Rice",
-                List.of("rice","egg","soy sauce","spring onion","carrot"),
-                20, "easy", List.of("non-vegetarian"), 360, 14,
-                "Stir-fry rice with scrambled egg, veggies, soy sauce & spring onions.",
-                "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/07/egg-fried-rice.jpg",
-                "https://www.youtube.com/watch?v=GvDwwwcf7mY",
-                "Chinese", 4.7, 900,
-                List.of("quick","street-style","kids-favorite"),
-                "10 min prep, 10 min cook", "2 servings"
+
+// 7. Shahi Paneer
+        list.add(new Recipe(null, "Shahi Paneer",
+                List.of("paneer","cashew","cream","onion","tomato","spices"),
+                30, "medium", List.of("vegetarian"), 410, 15,
+                "Paneer cubes cooked in a creamy cashew-cream gravy with gentle sweetness and Mughlai spices.",
+                "https://source.unsplash.com/800x600/?paneer,curry",
+                "https://www.youtube.com/watch?v=xIuA8G1tM8A",
+                "Indian", 4.9, 1800,
+                List.of("creamy","royal","north-indian"),
+                "10 min prep, 20 min cook",
+                "3 servings"
         ));
 
-        list.add(new Recipe(null, "Vegetable Pulao",
-                List.of("rice","peas","carrot","beans","spices"),
-                30, "easy", List.of("vegetarian","gluten-free"), 320, 8,
-                "Cook rice with veggies, whole spices, and ghee until aromatic.",
-                "https://www.vegrecipesofindia.com/wp-content/uploads/2021/06/veg-pulao-recipe-1.jpg",
-                "https://www.youtube.com/watch?v=EqpHKeJpU_o",
+
+// 8. Chicken Shawarma Wrap
+        list.add(new Recipe(null, "Chicken Shawarma Wrap",
+                List.of("chicken","pita","garlic sauce","lettuce","pickles","paprika"),
+                25, "easy", List.of("non-vegetarian"), 450, 27,
+                "Spiced grilled chicken wrapped with garlic toum, lettuce, and pickles in warm pita for a classic Middle Eastern flavor.",
+                "https://source.unsplash.com/800x600/?shawarma,wrap",
+                "https://www.youtube.com/watch?v=q_Bslj7Y2H4",
+                "Middle Eastern", 4.8, 1600,
+                List.of("street-food","tangy","grilled"),
+                "10 min prep, 15 min cook",
+                "2 servings"
+        ));
+
+
+// 9. Thai Green Curry
+        list.add(new Recipe(null, "Thai Green Curry",
+                List.of("coconut milk","green curry paste","basil","bamboo shoots","veggies"),
+                30, "medium", List.of("vegetarian"), 360, 13,
+                "A fragrant coconut-based curry cooked with green curry paste, vegetables, and Thai basil for fresh aroma.",
+                "https://source.unsplash.com/800x600/?thai-curry,green-curry",
+                "https://www.youtube.com/watch?v=Ke4d3lKx-zA",
+                "Thai", 4.7, 900,
+                List.of("fragrant","coconut","spicy"),
+                "10 min prep, 20 min cook",
+                "2 servings"
+        ));
+
+
+// 10. Avocado Toast with Poached Egg
+        list.add(new Recipe(null, "Avocado Toast with Poached Egg",
+                List.of("avocado","egg","bread","chili flakes","lemon"),
+                10, "easy", List.of("vegetarian"), 290, 12,
+                "Toasted sourdough topped with seasoned avocado mash and a perfectly runny poached egg.",
+                "https://source.unsplash.com/800x600/?avocado-toast,egg",
+                "https://www.youtube.com/watch?v=0fK9QJw1QCs",
+                "American", 4.6, 650,
+                List.of("healthy","breakfast","quick"),
+                "5 min prep, 5 min cook",
+                "1 serving"
+        ));
+
+
+// 11. Chana Masala
+        list.add(new Recipe(null, "Chana Masala",
+                List.of("chickpeas","tomato","onion","garlic","spices"),
+                30, "easy", List.of("vegetarian","vegan","gluten-free"), 320, 14,
+                "Chickpeas simmered in a spiced tomato-onion gravy with cumin, coriander, and garam masala.",
+                "https://source.unsplash.com/800x600/?chickpea-curry,indian",
+                "https://www.youtube.com/watch?v=1J2oA6cCBo8",
+                "Indian", 4.9, 2400,
+                List.of("vegan","spicy","north-indian"),
+                "10 min prep, 20 min cook",
+                "3 servings"
+        ));
+
+
+// 12. Veg Sushi Rolls
+        list.add(new Recipe(null, "Veg Sushi Rolls",
+                List.of("nori","sushi rice","vinegar","cucumber","avocado","tofu"),
+                25, "medium", List.of("vegetarian","gluten-free"), 280, 6,
+                "Japanese-style sushi filled with cucumber, avocado, and tofu, rolled tightly and served with soy sauce.",
+                "https://source.unsplash.com/800x600/?sushi,rolls",
+                "https://www.youtube.com/watch?v=I1UDS2kgqY8",
+                "Japanese", 4.7, 1100,
+                List.of("fresh","light","japanese"),
+                "10 min prep, 15 min cook",
+                "2 servings"
+        ));
+
+
+// 13. Peri-Peri Grilled Chicken
+        list.add(new Recipe(null, "Peri-Peri Grilled Chicken",
+                List.of("chicken","peri-peri sauce","lemon","garlic"),
+                30, "easy", List.of("non-vegetarian"), 300, 30,
+                "Marinated chicken flame-grilled with tangy and spicy peri-peri sauce for smoky flavor.",
+                "https://source.unsplash.com/800x600/?grilled-chicken,spicy",
+                "https://www.youtube.com/watch?v=V_E1B5nMDX4",
+                "African-Portuguese", 4.8, 1300,
+                List.of("spicy","grilled","tangy"),
+                "10 min prep, 20 min cook",
+                "2 servings"
+        ));
+
+
+// 14. Creamy Mushroom Soup
+        list.add(new Recipe(null, "Creamy Mushroom Soup",
+                List.of("mushrooms","cream","onion","garlic","butter"),
+                25, "easy", List.of("vegetarian"), 250, 6,
+                "Sautéed mushrooms blended into a velvety smooth soup simmered with cream and garlic.",
+                "https://source.unsplash.com/800x600/?mushroom-soup",
+                "https://www.youtube.com/watch?v=FjJXh6C5HMI",
+                "Continental", 4.6, 700,
+                List.of("creamy","cozy","soup"),
+                "10 min prep, 15 min cook",
+                "2 servings"
+        ));
+
+
+// 15. Mexican Burrito Bowl
+        list.add(new Recipe(null, "Mexican Burrito Bowl",
+                List.of("rice","beans","chicken","salsa","corn","avocado","cheese"),
+                25, "easy", List.of("non-vegetarian"), 480, 28,
+                "A layered bowl of spiced chicken, beans, rice, salsa, corn, cheese, and guacamole.",
+                "https://source.unsplash.com/800x600/?burrito-bowl,mexican",
+                "https://www.youtube.com/watch?v=-CYawE1FJus",
+                "Mexican", 4.8, 1600,
+                List.of("spicy","filling","bowl-meal"),
+                "10 min prep, 15 min cook",
+                "2 servings"
+        ));
+
+
+// 16. Falafel Wrap
+        list.add(new Recipe(null, "Falafel Wrap",
+                List.of("chickpeas","herbs","pita","tahini","garlic"),
+                20, "easy", List.of("vegetarian","vegan"), 390, 13,
+                "Crispy chickpea falafel wrapped with tahini sauce and vegetables inside warm pita.",
+                "https://source.unsplash.com/800x600/?falafel,wrap",
+                "https://www.youtube.com/watch?v=Zp2QThH9u2Q",
+                "Middle Eastern", 4.7, 900,
+                List.of("vegan","street-food","crispy"),
+                "10 min prep, 10 min cook",
+                "2 servings"
+        ));
+
+
+// 17. Garlic Butter Shrimp
+        list.add(new Recipe(null, "Garlic Butter Shrimp",
+                List.of("shrimp","butter","garlic","parsley","lemon"),
+                12, "easy", List.of("non-vegetarian"), 230, 20,
+                "Juicy shrimp cooked in rich garlic butter with herbs and lemon for a flavorful quick dish.",
+                "https://source.unsplash.com/800x600/?shrimp,seafood",
+                "https://www.youtube.com/watch?v=7P8RdA4c1bA",
+                "American", 4.8, 800,
+                List.of("buttery","seafood","quick"),
+                "3 min prep, 9 min cook",
+                "2 servings"
+        ));
+
+
+// 18. Chocolate Pancakes
+        list.add(new Recipe(null, "Chocolate Pancakes",
+                List.of("flour","cocoa powder","milk","egg","sugar","butter"),
+                15, "easy", List.of("vegetarian"), 350, 8,
+                "Rich chocolate pancakes served warm with chocolate chips or syrup.",
+                "https://source.unsplash.com/800x600/?chocolate-pancakes",
+                "https://www.youtube.com/watch?v=9b0Fqv0q3iE",
+                "American", 4.7, 950,
+                List.of("sweet","breakfast","fluffy"),
+                "5 min prep, 10 min cook",
+                "2 servings"
+        ));
+
+
+// 19. Veg Momos
+        list.add(new Recipe(null, "Veg Momos",
+                List.of("flour","cabbage","carrot","onion","soy sauce","ginger"),
+                20, "easy", List.of("vegetarian"), 210, 4,
+                "Steamed dumplings stuffed with finely chopped vegetables and mild seasoning.",
+                "https://source.unsplash.com/800x600/?momos,dumplings",
+                "https://www.youtube.com/watch?v=8x2cLxkS1Dc",
+                "Tibetan", 4.8, 1800,
+                List.of("street-food","light","snack"),
+                "10 min prep, 10 min cook",
+                "2 servings"
+        ));
+
+
+// 20. Lemon Herb Salmon
+        list.add(new Recipe(null, "Lemon Herb Salmon",
+                List.of("salmon","lemon","garlic","olive oil","herbs"),
+                15, "easy", List.of("non-vegetarian","gluten-free"), 390, 34,
+                "Oven-baked salmon flavored with lemon, garlic, and herbs for a healthy and protein-rich meal.",
+                "https://source.unsplash.com/800x600/?salmon,fish",
+                "https://www.youtube.com/watch?v=P7dFzvVY4zc",
+                "American", 4.9, 1200,
+                List.of("healthy","protein-rich","quick"),
+                "5 min prep, 10 min cook",
+                "2 servings"
+        ));
+
+        // 1. Korean Bibimbap
+        list.add(new Recipe(null, "Korean Bibimbap",
+                List.of("rice","spinach","mushroom","carrot","egg","gochujang","sesame oil"),
+                25, "medium", List.of("non-vegetarian"), 410, 16,
+                "Warm rice topped with sautéed vegetables, sesame oil, and a fried egg, served with spicy gochujang paste.",
+                "https://source.unsplash.com/800x600/?bibimbap,korean-food",
+                "https://www.youtube.com/watch?v=WT9Nf0qbG0A",
+                "Korean", 4.8, 1200,
+                List.of("spicy","bowl-meal","asian"),
+                "10 min prep, 15 min cook",
+                "2 servings"
+        ));
+
+
+// 2. French Onion Soup
+        list.add(new Recipe(null, "French Onion Soup",
+                List.of("onion","butter","broth","thyme","baguette","cheese"),
+                40, "medium", List.of("vegetarian"), 320, 10,
+                "Slow-caramelized onions cooked in broth, topped with toasted baguette slices and melted cheese.",
+                "https://source.unsplash.com/800x600/?onion-soup,french",
+                "https://www.youtube.com/watch?v=VnWq9S6M2eY",
+                "French", 4.7, 980,
+                List.of("warm","classic","comfort"),
+                "10 min prep, 30 min cook",
+                "2 servings"
+        ));
+
+
+// 3. Greek Chicken Gyro
+        list.add(new Recipe(null, "Greek Chicken Gyro",
+                List.of("chicken","yogurt","pita","cucumber","garlic","herbs"),
+                30, "easy", List.of("non-vegetarian"), 450, 33,
+                "Marinated grilled chicken wrapped inside pita with tzatziki, onions, and tomatoes.",
+                "https://source.unsplash.com/800x600/?gyro,greek-food",
+                "https://www.youtube.com/watch?v=q0cH5GqBl1c",
+                "Greek", 4.8, 1650,
+                List.of("tangy","grilled","mediterranean"),
+                "10 min prep, 20 min cook",
+                "2 servings"
+        ));
+
+
+// 4. Spinach Corn Sandwich
+        list.add(new Recipe(null, "Spinach Corn Sandwich",
+                List.of("spinach","corn","cheese","butter","garlic","bread"),
+                12, "easy", List.of("vegetarian"), 330, 9,
+                "Creamy spinach and sweet corn filling grilled between buttery toasted bread.",
+                "https://source.unsplash.com/800x600/?sandwich,spinach",
+                "https://www.youtube.com/watch?v=GvXa3Iu9B_I",
+                "Continental", 4.6, 900,
+                List.of("cheesy","snack","kids-friendly"),
+                "5 min prep, 7 min cook",
+                "1 serving"
+        ));
+
+
+// 5. Teriyaki Chicken Bowl
+        list.add(new Recipe(null, "Teriyaki Chicken Bowl",
+                List.of("chicken","soy sauce","sugar","ginger","garlic","rice"),
+                20, "easy", List.of("non-vegetarian"), 480, 29,
+                "Chicken glazed in sweet-savory teriyaki sauce served over warm rice.",
+                "https://source.unsplash.com/800x600/?teriyaki,chicken",
+                "https://www.youtube.com/watch?v=Iu9LQbX2BpQ",
+                "Japanese", 4.7, 1880,
+                List.of("sweet","bowl","asian"),
+                "8 min prep, 12 min cook",
+                "2 servings"
+        ));
+
+
+// 6. Lebanese Hummus Platter
+        list.add(new Recipe(null, "Lebanese Hummus Platter",
+                List.of("chickpeas","tahini","garlic","lemon","olive oil","pita"),
+                10, "easy", List.of("vegetarian","vegan"), 260, 8,
+                "Smooth creamy hummus drizzled with olive oil and served with warm pita bread.",
+                "https://source.unsplash.com/800x600/?hummus,mediterranean",
+                "https://www.youtube.com/watch?v=J9UQ1Wc9KDk",
+                "Middle Eastern", 4.8, 1500,
+                List.of("vegan","dip","healthy"),
+                "5 min prep, 5 min cook",
+                "2 servings"
+        ));
+
+
+// 7. Mushroom Risotto
+        list.add(new Recipe(null, "Mushroom Risotto",
+                List.of("arborio rice","mushroom","broth","parmesan","onion","butter"),
+                35, "medium", List.of("vegetarian"), 420, 12,
+                "Creamy risotto gently cooked with mushrooms, butter, and parmesan cheese.",
+                "https://source.unsplash.com/800x600/?risotto,mushroom",
+                "https://www.youtube.com/watch?v=Z_4O7f9B0q8",
+                "Italian", 4.7, 1300,
+                List.of("creamy","gourmet","italian"),
+                "10 min prep, 25 min cook",
+                "2 servings"
+        ));
+
+
+// 8. Fish Tacos
+        list.add(new Recipe(null, "Fish Tacos",
+                List.of("fish","tortilla","cabbage","lime","mayo","spices"),
+                18, "easy", List.of("non-vegetarian"), 390, 22,
+                "Crispy fish served in tortillas with tangy lime mayo and fresh cabbage slaw.",
+                "https://source.unsplash.com/800x600/?fish-tacos,mexican-food",
+                "https://www.youtube.com/watch?v=M-p7Va2x3V4",
+                "Mexican", 4.8, 1700,
+                List.of("seafood","tangy","fresh"),
+                "8 min prep, 10 min cook",
+                "2 servings"
+        ));
+
+
+// 9. Creamy Broccoli Pasta
+        list.add(new Recipe(null, "Creamy Broccoli Pasta",
+                List.of("pasta","broccoli","cream","garlic","butter"),
+                20, "easy", List.of("vegetarian"), 410, 11,
+                "Pasta tossed in a garlic cream sauce with soft-cooked broccoli florets.",
+                "https://source.unsplash.com/800x600/?broccoli,pasta",
+                "https://www.youtube.com/watch?v=S3vLrF6WnGo",
+                "American", 4.7, 1500,
+                List.of("creamy","comfort","quick"),
+                "5 min prep, 15 min cook",
+                "2 servings"
+        ));
+
+
+// 10. Moroccan Chickpea Stew
+        list.add(new Recipe(null, "Moroccan Chickpea Stew",
+                List.of("chickpeas","tomato","cinnamon","cumin","garlic","onion"),
+                30, "medium", List.of("vegetarian","vegan"), 330, 14,
+                "Warm stew with chickpeas, tomatoes, and Moroccan spices like cumin and cinnamon.",
+                "https://source.unsplash.com/800x600/?chickpea,stew",
+                "https://www.youtube.com/watch?v=2y2gqQU8HS4",
+                "Moroccan", 4.9, 1600,
+                List.of("vegan","warm","exotic"),
+                "10 min prep, 20 min cook",
+                "2 servings"
+        ));
+
+
+// 11. Cajun Spicy Chicken
+        list.add(new Recipe(null, "Cajun Spicy Chicken",
+                List.of("chicken","cajun seasoning","lemon","garlic","oil"),
+                25, "easy", List.of("non-vegetarian"), 350, 32,
+                "Chicken marinated in cajun seasoning and grilled for smoky heat and bold flavor.",
+                "https://source.unsplash.com/800x600/?cajun,chicken",
+                "https://www.youtube.com/watch?v=2hN6rJgnP-4",
+                "American", 4.7, 1100,
+                List.of("grilled","spicy","smoky"),
+                "10 min prep, 15 min cook",
+                "2 servings"
+        ));
+
+
+// 12. Caprese Salad
+        list.add(new Recipe(null, "Caprese Salad",
+                List.of("tomato","mozzarella","basil","olive oil","balsamic"),
+                5, "easy", List.of("vegetarian","gluten-free"), 220, 9,
+                "Fresh tomatoes layered with mozzarella and basil, drizzled with balsamic reduction.",
+                "https://source.unsplash.com/800x600/?caprese,salad",
+                "https://www.youtube.com/watch?v=fsmS4N06gE8",
+                "Italian", 4.8, 900,
+                List.of("fresh","light","summer"),
+                "3 min prep, 2 min cook",
+                "1 serving"
+        ));
+
+
+// 13. Vietnamese Banh Mi
+        list.add(new Recipe(null, "Vietnamese Banh Mi",
+                List.of("baguette","chicken","carrot","radish","cilantro","chili","mayo"),
+                20, "medium", List.of("non-vegetarian"), 480, 26,
+                "Crispy baguette filled with grilled chicken, pickled veggies, chili, and creamy mayo.",
+                "https://source.unsplash.com/800x600/?banh-mi,vietnamese",
+                "https://www.youtube.com/watch?v=zWrpV8K7t90",
+                "Vietnamese", 4.9, 2000,
+                List.of("street-food","tangy","asian"),
+                "10 min prep, 10 min cook",
+                "1 serving"
+        ));
+
+
+// 14. Butter Garlic Naan
+        list.add(new Recipe(null, "Butter Garlic Naan",
+                List.of("flour","yogurt","garlic","butter","salt"),
+                15, "easy", List.of("vegetarian"), 300, 7,
+                "Soft naan cooked on tawa or tandoor, finished with garlic-infused butter.",
+                "https://source.unsplash.com/800x600/?naan,indian-bread",
+                "https://www.youtube.com/watch?v=Y9MIX2yjZpI",
                 "Indian", 4.8, 1700,
-                List.of("mild","lunch","fragrant"),
-                "10 min prep, 20 min cook", "2 servings"
+                List.of("bread","buttery","garlic"),
+                "5 min prep, 10 min cook",
+                "2 servings"
         ));
 
-        list.add(new Recipe(null, "Upma",
-                List.of("semolina","onion","mustard","chili","ghee","spices"),
-                20, "easy", List.of("vegetarian"), 270, 5,
-                "Roast rava, cook with water, sauté onion & mustard, combine and serve.",
-                "https://www.vegrecipesofindia.com/wp-content/uploads/2021/03/upma-recipe-1.jpg",
-                "https://www.youtube.com/watch?v=2W_TZL2cXpg",
-                "Indian", 4.7, 600,
-                List.of("breakfast","light","south-indian"),
-                "5 min prep, 15 min cook", "2 servings"
+
+// 15. Spicy Ramen Bowl
+        list.add(new Recipe(null, "Spicy Ramen Bowl",
+                List.of("ramen","broth","chili paste","spring onion","egg"),
+                18, "easy", List.of("non-vegetarian"), 420, 15,
+                "Ramen noodles simmered in chili garlic broth topped with soft-boiled egg and spring onions.",
+                "https://source.unsplash.com/800x600/?ramen,spicy",
+                "https://www.youtube.com/watch?v=Vd3rpKb5L64",
+                "Japanese", 4.7, 2100,
+                List.of("spicy","soupy","comfort"),
+                "5 min prep, 13 min cook",
+                "1 serving"
         ));
+
+
+// 16. Honey Chili Potatoes
+        list.add(new Recipe(null, "Honey Chili Potatoes",
+                List.of("potato","honey","soy sauce","chili sauce","sesame"),
+                20, "easy", List.of("vegetarian"), 350, 4,
+                "Crispy fried potatoes tossed in sweet-spicy honey chili sauce topped with sesame seeds.",
+                "https://source.unsplash.com/800x600/?chili-potato,indo-chinese",
+                "https://www.youtube.com/watch?v=PbbdwN4IC2A",
+                "Indo-Chinese", 4.8, 1400,
+                List.of("sweet-spicy","crispy","snack"),
+                "8 min prep, 12 min cook",
+                "2 servings"
+        ));
+
+
+// 17. Lemon Butter Chicken
+        list.add(new Recipe(null, "Lemon Butter Chicken",
+                List.of("chicken","lemon","butter","garlic","herbs"),
+                22, "easy", List.of("non-vegetarian"), 410, 33,
+                "Tender chicken cooked in a tangy and buttery garlic-lemon sauce.",
+                "https://source.unsplash.com/800x600/?lemon-chicken,butter",
+                "https://www.youtube.com/watch?v=fXHnQ0N4iLA",
+                "Continental", 4.8, 1250,
+                List.of("tangy","buttery","juicy"),
+                "8 min prep, 14 min cook",
+                "2 servings"
+        ));
+
+
+// 18. Red Sauce Penne
+        list.add(new Recipe(null, "Red Sauce Penne",
+                List.of("penne","tomato","basil","olive oil","garlic"),
+                20, "easy", List.of("vegetarian"), 360, 10,
+                "Classic tomato basil pasta simmered in rich red sauce and tossed with herbs.",
+                "https://source.unsplash.com/800x600/?penne,red-sauce",
+                "https://www.youtube.com/watch?v=u0V3N1s-VCY",
+                "Italian", 4.6, 1000,
+                List.of("classic","italian","vegetarian"),
+                "7 min prep, 13 min cook",
+                "2 servings"
+        ));
+
+
+// 19. Turkish Menemen
+        list.add(new Recipe(null, "Turkish Menemen",
+                List.of("egg","tomato","pepper","olive oil","salt"),
+                12, "easy", List.of("vegetarian"), 280, 16,
+                "Soft-scrambled eggs cooked slowly with tomatoes, peppers, and olive oil.",
+                "https://source.unsplash.com/800x600/?menemen,turkish-food",
+                "https://www.youtube.com/watch?v=r1JcZ8J2TnE",
+                "Turkish", 4.7, 800,
+                List.of("breakfast","soft-eggs","mediterranean"),
+                "5 min prep, 7 min cook",
+                "1 serving"
+        ));
+
+
+// 20. Sri Lankan Coconut Sambal with Roti
+        list.add(new Recipe(null, "Coconut Sambal with Roti",
+                List.of("coconut","chili","lime","salt","flour"),
+                18, "easy", List.of("vegetarian"), 320, 6,
+                "Fresh coconut chili sambal blended with lime, served with soft coconut roti.",
+                "https://source.unsplash.com/800x600/?coconut,roti",
+                "https://www.youtube.com/watch?v=OxDRJjdsRpo",
+                "Sri Lankan", 4.8, 1400,
+                List.of("spicy","fresh","island-style"),
+                "8 min prep, 10 min cook",
+                "2 servings"
+        ));
+
+
 
         return list;
     }

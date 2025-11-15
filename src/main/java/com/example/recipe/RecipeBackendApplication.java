@@ -27,7 +27,7 @@ public class RecipeBackendApplication {
 				registry.addMapping("/api/**")
 						.allowedOrigins(
 								"http://localhost:5173",               // local Vite dev server
-								"https://cuisinex-frontend.vercel.app" // deployed frontend (future)
+								"https://smart-recipe-generator-frontend-zoy3.onrender.com" // deployed frontend (future)
 						)
 						.allowedMethods("GET", "POST", "PUT", "DELETE")
 						.allowedHeaders("*");
