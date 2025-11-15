@@ -62,41 +62,41 @@ public class RecipeService {
     public String generateStructuredRecipeFromGemini(List<String> ingredients) {
         try {
             String prompt = """
-                 If you are unsure, still generate a simple safe recipe.
-                  Do NOT return null. Always return a recipe.
+    You MUST return ONLY valid JSON. Never use markdown or backticks.
+    Always generate a complete recipe even if ingredients look unusual.
 
-                If ANY ingredient is unsafe or fictional:
-                { "recipe": null, "score": 0 }
+    DO NOT return null under any circumstances.
 
-                "imageBase64" must be base64 or empty string.
-                No URLs. No markdown.
+    "imageBase64" may be valid base64 OR empty string.
+    No URLs allowed.
 
-                JSON FORMAT:
-                {
-                  "recipe": {
-                    "id": "string",
-                    "name": "string",
-                    "ingredients": ["string"],
-                    "timeMinutes": number,
-                    "difficulty": "easy" | "medium" | "hard",
-                    "dietTags": ["string"],
-                    "calories": number,
-                    "protein": number,
-                    "instructions": "string",
-                    "imageBase64": "string",
-                    "youtubeLink": "string",
-                    "cuisine": "string",
-                    "rating": number,
-                    "reviewsCount": number,
-                    "tags": ["string"],
-                    "prepTime": "string",
-                    "servingSize": "string"
-                  },
-                  "score": number
-                }
+    JSON FORMAT:
+    {
+      "recipe": {
+        "id": "string",
+        "name": "string",
+        "ingredients": ["string"],
+        "timeMinutes": number,
+        "difficulty": "easy" | "medium" | "hard",
+        "dietTags": ["string"],
+        "calories": number,
+        "protein": number,
+        "instructions": "string",
+        "imageBase64": "string",
+        "youtubeLink": "string",
+        "cuisine": "string",
+        "rating": number,
+        "reviewsCount": number,
+        "tags": ["string"],
+        "prepTime": "string",
+        "servingSize": "string"
+      },
+      "score": number
+    }
 
-                INGREDIENTS: %s
-            """.formatted(ingredients);
+    INGREDIENTS: %s
+""".formatted(ingredients);
+
 
             var response = geminiClient.models.generateContent("gemini-2.0-flash", prompt, null);
             String json = response.text().trim();
