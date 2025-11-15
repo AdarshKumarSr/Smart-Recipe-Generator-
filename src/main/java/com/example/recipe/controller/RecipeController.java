@@ -109,10 +109,11 @@ public class RecipeController {
         }
 
         // All scores too low → meaningless match → AI
-        boolean allZero = results.stream().allMatch(r -> r.getScore() < 0.01);
+        boolean allZero = results.stream().allMatch(r -> r.getScore() < 0.05);
         if (allZero) {
             return ResponseEntity.ok(Map.of("aiSuggested", true));
         }
+
 
         return ResponseEntity.ok(results);
     }

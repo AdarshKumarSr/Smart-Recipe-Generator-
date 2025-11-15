@@ -62,10 +62,8 @@ public class RecipeService {
     public String generateStructuredRecipeFromGemini(List<String> ingredients) {
         try {
             String prompt = """
-                You MUST return ONLY valid JSON. No text before or after.
-
-                If the format fails:
-                { "recipe": null, "score": 0 }
+                 If you are unsure, still generate a simple safe recipe.
+                  Do NOT return null. Always return a recipe.
 
                 If ANY ingredient is unsafe or fictional:
                 { "recipe": null, "score": 0 }
@@ -258,6 +256,7 @@ public class RecipeService {
                 .filter(r -> maxTime == null || r.getTimeMinutes() <= maxTime)
                 .filter(r -> cuisine == null || cuisine.isBlank() ||
                         r.getCuisine().equalsIgnoreCase(cuisine))
+
                 .filter(r -> minRating == null || r.getRating() >= minRating)
                 .filter(r -> tag == null || tag.isBlank() ||
                         r.getTags().stream().anyMatch(t -> t.equalsIgnoreCase(tag)))
