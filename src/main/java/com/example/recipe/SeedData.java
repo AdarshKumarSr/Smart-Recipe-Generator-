@@ -544,7 +544,7 @@ public class SeedData {
                 List.of("egg","tomato","pepper","olive oil","salt"),
                 12, "easy", List.of("vegetarian"), 280, 16,
                 "Soft-scrambled eggs cooked slowly with tomatoes, peppers, and olive oil.",
-                "https://www.turkeysforlife.com/wp-content/uploads/2018/09/menemen-recipe-turkish-omelette.jpg",
+                "https://www.alphafoodie.com/wp-content/uploads/2021/08/Menemen-Square.jpeg",
                 "https://www.youtube.com/watch?v=r1JcZ8J2TnE",
                 "Turkish", 4.7, 800,
                 List.of("breakfast","soft-eggs","mediterranean"),
