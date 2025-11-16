@@ -1,122 +1,90 @@
 
 ---
+# Smart Recipe Generator Backend (v2.0)
 
-# **Smart Recipe Generator Backend (v2.0)**
+**Tech Stack:** Spring Boot • MongoDB Atlas • Gemini AI • Google OAuth • Docker • Java 17
 
-### **Spring Boot + MongoDB + Gemini AI + Google OAuth + Docker**
-
-🔗 **Live Backend API:**
-👉 [https://smart-recipe-generator.up.railway.app](https://smart-recipe-generator.up.railway.app)
-
-🔗 **Live Frontend App:**
-👉 [https://smart-recipe-generator-frontend-zoy3.onrender.com](https://smart-recipe-generator-frontend-zoy3.onrender.com)
-
-👨‍💻 **Developer Portfolio:**
-👉 [https://portfolio-e7gt.onrender.com/](https://portfolio-e7gt.onrender.com/)
+### Live Services
+- **Backend API:** https://smart-recipe-generator.up.railway.app
+- **Frontend Web App:** https://smart-recipe-generator-frontend-zoy3.onrender.com
+- **Developer Portfolio:** https://portfolio-e7gt.onrender.com
 
 ---
 
-# 🍳 **Overview**
+## Overview
 
-The **Smart Recipe Generator Backend** powers an AI–driven cooking assistant that intelligently:
+The **Smart Recipe Generator Backend** provides APIs for an AI-assisted recipe platform capable of:
 
-* Finds matching recipes using scoring logic
-* Generates recipes with **Gemini AI** when no match is found
-* Filters recipes using advanced parameters
-* Handles **Google OAuth login** and JWT authentication
-* Provides a **fast, production-ready REST API**
-* Is fully containerized using **Docker**
-
----
-
-# 🏗️ **Tech Stack**
-
-| Component  | Technology                                         |
-| ---------- | -------------------------------------------------- |
-| Backend    | **Spring Boot 3.x**                                |
-| Database   | **MongoDB Atlas**                                  |
-| AI Model   | **Google Gemini 2.0 Flash (JSON Structured Mode)** |
-| Auth       | **Google OAuth + JWT**                             |
-| Build Tool | Maven                                              |
-| Deployment | **Railway / Render**                               |
-| Docker     | Containerized production build                     |
-| Java       | **Java 17**                                        |
+- Searching recipes based on ingredient similarity and scoring
+- Automatically generating recipes using **Gemini AI** when suitable results are unavailable
+- Supporting recipe filtering through multiple search parameters
+- Handling secure authentication via **Google OAuth + JWT**
+- Delivering a production-ready, containerized backend
 
 ---
 
-# ⭐ **Key Backend Features**
+## Technology Overview
 
-### 🚀 1. **Ingredient-Based Matching with Score**
-
-Matches user input to recipes using similarity & scoring logic.
-
-### 🤖 2. **AI Recipe Generator (Gemini)**
-
-If DB cannot find a good match → auto-fallback to Gemini AI.
-
-### 🎚️ 3. **Advanced Filtering**
-
-Supports:
-
-* diet
-* difficulty
-* cuisine
-* tags
-* maxTime
-* minRating
-* ingredient text parsing
-
-### 🔐 4. **Google OAuth Login + JWT**
-
-Secure user authentication system.
-
-### 🛠️ 5. **Clean DTO-based API**
-
-Structured responses & safe parsing of AI output.
-
-### 🐳 6. **Dockerized**
-
-Portable & production-ready.
+| Area        | Technology                                         |
+|-------------|----------------------------------------------------|
+| Backend     | Spring Boot 3.x                                    |
+| Database    | MongoDB Atlas                                      |
+| AI Model    | Gemini 2.0 Flash (Structured JSON Output)          |
+| Auth        | Google OAuth + JWT                                 |
+| Build Tool  | Maven                                              |
+| Deployment  | Railway / Render                                   |
+| Container   | Docker                                             |
+| Language    | Java 17                                            |
 
 ---
 
-# 📁 **Project Structure**
+## Key Features
+
+1. **Ingredient-based recipe matching** using similarity scoring  
+2. **AI-generated recipes** via Gemini fallback logic  
+3. **Advanced filtering** (diet, difficulty, cuisine, tags, time, rating, etc.)  
+4. **Google OAuth authentication** with JWT-based session management  
+5. **DTO-driven API design** with validated structured responses  
+6. **Containerized deployment** using Docker for scalability and portability  
+
+---
+
+## Project Structure
 
 ```
+
 recipe-backend/
- ┣ controller/
- ┣ dto/
- ┣ model/
- ┣ repository/
- ┣ service/
- ┣ config/
- ┣ SeedData.java
- ┣ Dockerfile
- ┣ pom.xml
- ┗ README.md
+┣ controller/
+┣ dto/
+┣ model/
+┣ repository/
+┣ service/
+┣ config/
+┣ SeedData.java
+┣ Dockerfile
+┣ pom.xml
+┗ README.md
+
 ```
 
 ---
 
-# 🌐 **API Endpoints**
+## API Endpoints
 
-## 🩺 1. Health Check
-
-**GET** `/api/recipes/ping`
+### 1️⃣ Health Check
+**GET** `/api/recipes/ping`  
 Response:
+```
 
-```
 recipe service alive
-```
+
+````
 
 ---
 
-## 🍲 2. Unified Ingredient Matching
-
-**POST:** `/api/recipes/find`
-
-### **Request**
-
+### 2️⃣ Ingredient-Based Matching
+**POST** `/api/recipes/find`  
+**Request**
 ```json
 {
   "ingredientsText": "egg tomato onion",
@@ -127,37 +95,34 @@ recipe service alive
   "maxTime": 20,
   "minRating": 3
 }
-```
+````
 
-### **DB Response**
+**Response (DB match)**
 
 ```json
 [
-  { "recipe": {...}, "score": 0.72 }
+  { "recipe": { ... }, "score": 0.72 }
 ]
 ```
 
-### **AI Fallback Response**
+**Response (AI fallback)**
 
 ```json
-{
-  "aiSuggested": true
-}
+{ "aiSuggested": true }
 ```
 
 ---
 
-## 🤖 3. AI Recipe Generator
+### 3️⃣ AI Recipe Generator
 
-**POST:** `/api/recipes/ai-recipe`
-
-Request:
+**POST** `/api/recipes/ai-recipe`
+**Request**
 
 ```json
 { "ingredients": ["chicken", "butter", "garlic"] }
 ```
 
-Response:
+**Response**
 
 ```json
 {
@@ -169,19 +134,17 @@ Response:
 
 ---
 
-## 🔎 4. Filter Recipes
+### 4️⃣ Filter Recipes
 
-**GET:** `/api/recipes/filter?diet=vegan&difficulty=easy&maxTime=15`
+**GET** `/api/recipes/filter?diet=vegan&difficulty=easy&maxTime=15`
 
----
+### 5️⃣ Get All Recipes
 
-## 📚 5. Fetch All Recipes
-
-**GET:** `/api/recipes`
+**GET** `/api/recipes`
 
 ---
 
-# 🤖 **AI Output Schema (Guaranteed Format)**
+## AI Output Schema
 
 ```json
 {
@@ -210,9 +173,9 @@ Response:
 
 ---
 
-# 🧪 **Local Development**
+## Local Development
 
-### Run Backend
+### Run Application
 
 ```bash
 mvn spring-boot:run
@@ -232,7 +195,7 @@ java -jar target/*.jar
 
 ---
 
-# 🐳 **Docker Deployment**
+## Docker Usage
 
 ### Build Image
 
@@ -248,28 +211,20 @@ docker run -p 8080:8080 recipe-backend
 
 ---
 
-# 🌱 **Seed Data**
+## Seed Data
 
-`SeedData.java` auto-populates **20+ curated recipes** into MongoDB.
-
----
-
-# 🚧 **Future Enhancements**
-
-* 📸 Ingredient detection from images
-* ⭐ User favorites & rating system
-* 🧬 Personalized AI recommendations
-* 🍽️ Weekly meal planner
+`SeedData.java` includes predefined sample recipes for initial database population.
 
 ---
 
-# 👨‍💻 **Author**
+## Planned Enhancements
 
-Built with ⚡ passion, ☕ coffee & 🧠 curiosity.
-
-### **[Adarsh Kumar](https://portfolio-e7gt.onrender.com/)**
-
-🔗 Portfolio & Projects
-💼 SoftWare Developer (Java + React)
+* Image-based ingredient detection
+* User favorites, reviews, and rating system
+* Personalized AI recommendations
+* Meal planning and nutrition tracking
 
 ---
+
+## Author  © <a href="https://portfolio-e7gt.onrender.com/" target="_blank"><strong>Adarsh Kumar</strong></a>
+
